@@ -383,7 +383,7 @@ export default function LandingPage() {
      RENDER
   ───────────────────────────────────────────────────────── */
   return (
-    <main style={{ background: "#050a05" }}>
+    <main style={{ background: "#ffffff" }}>
       {/* ── Dot Navigation ── */}
       <DotNav active={activeSection} onDotClick={scrollToSection} />
 
@@ -401,7 +401,7 @@ export default function LandingPage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at 70% 50%, #0d1a06 0%, #050a05 65%)",
+              "radial-gradient(ellipse at 70% 50%, #f5f3ff 0%, #ffffff 65%)",
           }}
         />
 
@@ -433,7 +433,7 @@ export default function LandingPage() {
           />
           <div
             className="absolute inset-0"
-            style={{ background: "rgba(5, 10, 5, 0.45)" }}
+            style={{ background: "rgba(255, 255, 255, 0.25)" }}
           />
         </motion.div>
 
@@ -444,7 +444,7 @@ export default function LandingPage() {
           style={{
             width: "65%",
             background:
-              "linear-gradient(to right,rgba(5,10,5,0.97) 0%,rgba(5,10,5,0.8) 52%,transparent 100%)",
+              "linear-gradient(to right,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0.7) 52%,transparent 100%)",
           }}
         />
 
@@ -506,7 +506,7 @@ export default function LandingPage() {
                     transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
                   },
                 }}
-                className="font-bold leading-[1.04] tracking-tight mb-7 text-white"
+                className="font-bold leading-[1.04] tracking-tight mb-7 text-gray-900"
                 style={{ fontSize: "clamp(2.8rem, 6.5vw, 5.4rem)" }}
               >
                 Investing in the
@@ -521,7 +521,7 @@ export default function LandingPage() {
                   show: { opacity: 1, y: 0, transition: T },
                 }}
                 className="text-lg md:text-xl leading-relaxed max-w-sm mb-12"
-                style={{ color: "rgba(255,255,255,0.5)" }}
+                style={{ color: "rgba(0,0,0,0.6)" }}
               >
                 Since 1958, Greens Global has developed world-class real estate
                 assets — from Class-A storage facilities to life sciences
@@ -539,7 +539,7 @@ export default function LandingPage() {
                 <button
                   onClick={() => scrollToSection(2)}
                   className="inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-wide rounded-sm transition-opacity hover:opacity-80"
-                  style={{ background: BRAND, color: "#050a05" }}
+                  style={{ background: BRAND, color: "#ffffff" }}
                 >
                   View Portfolio
                   <motion.span
@@ -555,7 +555,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => scrollToSection(4)}
-                  className="inline-flex items-center px-8 py-4 text-sm font-medium tracking-wide rounded-sm transition-all duration-200 text-white/65 hover:text-white"
+                  className="inline-flex items-center px-8 py-4 text-sm font-medium tracking-wide rounded-sm transition-all duration-200 text-gray-700 hover:text-gray-900"
                   style={{ border: `1px solid ${BRAND}35` }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.borderColor = BRAND)
@@ -578,7 +578,7 @@ export default function LandingPage() {
                   },
                 }}
                 className="flex flex-wrap items-center gap-6 mt-10 pt-8"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}
               >
                 {["Greens Storage", "CubeSmart Partner", "Genopolis"].map(
                   (n) => (
@@ -589,7 +589,7 @@ export default function LandingPage() {
                       />
                       <span
                         className="text-xs font-medium"
-                        style={{ color: "rgba(255,255,255,0.35)" }}
+                        style={{ color: "rgba(0,0,0,0.35)" }}
                       >
                         {n}
                       </span>
