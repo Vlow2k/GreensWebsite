@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:tenbinlabs.xyz)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.landing.love)",
+      "WebFetch(domain:medium.muz.li)",
+      "WebFetch(domain:onepagelove.com)",
+      "WebFetch(domain:peachweb.io)",
+      "WebFetch(domain:www.greensglobal.com)"
+    ]
+  }
+}

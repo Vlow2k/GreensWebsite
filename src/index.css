@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* One section per scroll — mandatory snap on the root scroll container */
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+    background: #050a05;
+    color: #ffffff;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Hide scrollbar visually but keep it functional */
+  html::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
+}
