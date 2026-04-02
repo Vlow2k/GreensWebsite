@@ -100,7 +100,7 @@ function CityGrid({ mouse }) {
 function Scene({ mouse }) {
   return (
     <>
-      <fog attach="fog" args={["#050a05", 14, 32]} />
+      <fog attach="fog" args={["#ffffff", 14, 32]} />
       <ambientLight intensity={0.2} />
       <pointLight
         position={[0, 6, 0]}
@@ -661,7 +661,7 @@ export default function LandingPage() {
             </h2>
             <p
               className="max-w-xl mx-auto text-lg leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.42)" }}
+              style={{ color: "rgba(0,0,0,0.65)" }}
             >
               Greens Global is a privately held investment and development firm
               with a decades-long track record spanning self-storage, retail,
@@ -723,7 +723,7 @@ export default function LandingPage() {
         ref={portfolioRef}
         id="portfolio"
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
-        style={{ background: "#050a05" }}
+        style={{ background: "#ffffff" }}
       >
         <div className="max-w-7xl mx-auto w-full">
           {/* Header */}
@@ -758,16 +758,16 @@ export default function LandingPage() {
                 whileHover={{ y: -7, transition: { duration: 0.22 } }}
                 className="rounded-sm p-7 flex flex-col gap-4 cursor-pointer group"
                 style={{
-                  background: "rgba(255,255,255,0.028)",
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: "rgba(0,0,0,0.04)",
+                  border: "1px solid rgba(0,0,0,0.15)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = `${BRAND}40`;
                   e.currentTarget.style.background = `${BRAND}08`;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.028)";
+                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+                  e.currentTarget.style.background = "rgba(0,0,0,0.04)";
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -779,7 +779,7 @@ export default function LandingPage() {
                   </span>
                   <span
                     className="text-[10px]"
-                    style={{ color: "rgba(255,255,255,0.25)" }}
+                    style={{ color: "rgba(0,0,0,0.45)" }}
                   >
                     {p.detail}
                   </span>
@@ -792,7 +792,7 @@ export default function LandingPage() {
                 </div>
                 <p
                   className="text-sm leading-relaxed flex-1"
-                  style={{ color: "rgba(255,255,255,0.42)" }}
+                  style={{ color: "rgba(0,0,0,0.65)" }}
                 >
                   {p.desc}
                 </p>
@@ -897,7 +897,7 @@ export default function LandingPage() {
         ref={aboutRef}
         id="about"
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
-        style={{ background: "#050a05" }}
+        style={{ background: "#ffffff" }}
       >
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
           {/* Left — story */}
@@ -1018,7 +1018,7 @@ export default function LandingPage() {
             <button
               onClick={() => scrollToSection(5)}
               className="mt-6 inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-wide rounded-sm transition-opacity hover:opacity-80"
-              style={{ background: BRAND, color: "#050a05" }}
+              style={{ background: BRAND, color: "#ffffff" }}
             >
               Work With Us →
             </button>
@@ -1066,7 +1066,7 @@ export default function LandingPage() {
               {...inViewFadeUp}
               transition={{ ...T, delay: 0.2 }}
               className="text-lg mb-10 leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.42)" }}
+              style={{ color: "rgba(0,0,0,0.65)" }}
             >
               Whether you're an investor, operator, or development partner —
               we'd love to connect and explore how Greens Global can create
@@ -1080,7 +1080,7 @@ export default function LandingPage() {
               <a
                 href="mailto:info@greensglobal.com"
                 className="px-10 py-4 text-sm font-bold tracking-wide rounded-sm transition-opacity hover:opacity-80"
-                style={{ background: BRAND, color: "#050a05" }}
+                style={{ background: BRAND, color: "#ffffff" }}
               >
                 Contact Us
               </a>
@@ -1120,7 +1120,7 @@ export default function LandingPage() {
                 className="w-7 h-7 rounded-sm flex items-center justify-center"
                 style={{ background: BRAND }}
               >
-                <span className="text-[#050a05] font-black text-xs">GG</span>
+                <span className="text-[#ffffff] font-black text-xs">GG</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 leading-none">
