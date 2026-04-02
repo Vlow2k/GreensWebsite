@@ -13,7 +13,7 @@ import {
 /* ─────────────────────────────────────────────────────────────
    BRAND
 ───────────────────────────────────────────────────────────── */
-const BRAND = "#d97706"; // Warm amber - professional and trustworthy
+const BRAND = "#9cc72b"; // Green - company color
 
 /* ─────────────────────────────────────────────────────────────
    DETERMINISTIC BUILDING GRID
@@ -611,7 +611,7 @@ export default function LandingPage() {
         >
           <span
             className="text-[10px] tracking-[0.28em] uppercase"
-            style={{ color: "rgba(255,255,255,0.2)" }}
+            style={{ color: "rgba(0,0,0,0.3)" }}
           >
             Scroll
           </span>
@@ -633,14 +633,14 @@ export default function LandingPage() {
         ref={overviewRef}
         id="overview"
         className="relative h-screen snap-start flex flex-col items-center justify-center overflow-hidden px-6 lg:px-14"
-        style={{ background: "#060c06" }}
+        style={{ background: "#ffffff" }}
       >
-        {/* Ambient glow */}
+        {/* Ambient glow - green gradient */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${BRAND}0c 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${BRAND}08 0%, transparent 70%)`,
           }}
         />
 
@@ -653,7 +653,7 @@ export default function LandingPage() {
           >
             <Eyebrow>Company Overview</Eyebrow>
             <h2
-              className="font-bold text-white leading-tight mb-5"
+              className="font-bold text-gray-900 leading-tight mb-5"
               style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
             >
               Building Value.
@@ -731,7 +731,7 @@ export default function LandingPage() {
             <Eyebrow>Portfolio</Eyebrow>
             <div className="flex items-end justify-between flex-wrap gap-4">
               <h2
-                className="font-bold text-white leading-tight"
+                className="font-bold text-gray-900 leading-tight"
                 style={{ fontSize: "clamp(1.9rem, 4vw, 3.2rem)" }}
               >
                 Featured Properties
@@ -785,7 +785,7 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-white">{p.name}</h3>
+                  <h3 className="font-bold text-lg text-gray-900">{p.name}</h3>
                   <p className="text-sm mt-0.5" style={{ color: BRAND }}>
                     {p.location}
                   </p>
@@ -820,7 +820,7 @@ export default function LandingPage() {
         ref={servicesRef}
         id="services"
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
-        style={{ background: "#060c06" }}
+        style={{ background: "#ffffff" }}
       >
         {/* Top glow */}
         <div
@@ -835,7 +835,7 @@ export default function LandingPage() {
           <motion.div {...inViewFadeUp} transition={T} className="mb-12">
             <Eyebrow>What We Do</Eyebrow>
             <h2
-              className="font-bold text-white leading-tight"
+              className="font-bold text-gray-900 leading-tight"
               style={{ fontSize: "clamp(1.9rem, 4vw, 3.2rem)" }}
             >
               Four Pillars of{" "}
@@ -870,7 +870,7 @@ export default function LandingPage() {
                   {s.n}
                 </span>
                 <div>
-                  <h3 className="font-bold text-white mb-3 leading-snug">
+                  <h3 className="font-bold text-gray-900 mb-3 leading-snug">
                     {s.title}
                   </h3>
                   <p
@@ -904,7 +904,7 @@ export default function LandingPage() {
           <motion.div {...inViewFadeLeft} transition={T}>
             <Eyebrow>About Us</Eyebrow>
             <h2
-              className="font-bold text-white leading-tight mb-6"
+              className="font-bold text-gray-900 leading-tight mb-6"
               style={{ fontSize: "clamp(2rem, 4vw, 3.4rem)" }}
             >
               Over Six Decades of
@@ -1003,9 +1003,9 @@ export default function LandingPage() {
             >
               <p
                 className="text-sm leading-relaxed"
-                style={{ color: "rgba(255,255,255,0.5)" }}
+                style={{ color: "rgba(0,0,0,0.6)" }}
               >
-                <span className="font-bold text-white">
+                <span className="font-bold text-gray-900">
                   910 S. El Camino Real, Suite #202
                 </span>
                 <br />
@@ -1033,7 +1033,7 @@ export default function LandingPage() {
         ref={contactRef}
         id="contact"
         className="relative h-screen snap-start flex flex-col overflow-hidden"
-        style={{ background: "#060c06" }}
+        style={{ background: "#ffffff" }}
       >
         {/* Glow blob */}
         <div
@@ -1055,7 +1055,7 @@ export default function LandingPage() {
             <motion.h2
               {...inViewFadeUp}
               transition={{ ...T, delay: 0.1 }}
-              className="font-bold text-white leading-tight mb-6"
+              className="font-bold text-gray-900 leading-tight mb-6"
               style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
             >
               Ready to Explore
@@ -1086,7 +1086,7 @@ export default function LandingPage() {
               </a>
               <a
                 href="tel:+19495460560"
-                className="px-10 py-4 text-sm font-medium tracking-wide rounded-sm transition-all duration-200 text-white/60 hover:text-white"
+                className="px-10 py-4 text-sm font-medium tracking-wide rounded-sm transition-all duration-200 text-gray-700 hover:text-gray-900"
                 style={{ border: `1px solid ${BRAND}40` }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.borderColor = BRAND)
@@ -1123,7 +1123,7 @@ export default function LandingPage() {
                 <span className="text-[#050a05] font-black text-xs">GG</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white leading-none">
+                <p className="text-sm font-semibold text-gray-900 leading-none">
                   Greens Global
                 </p>
                 <p
@@ -1134,7 +1134,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+            <p className="text-xs" style={{ color: "rgba(0,0,0,0.3)" }}>
               © {new Date().getFullYear()} Greens Global, Inc. All Rights
               Reserved.
             </p>
@@ -1143,7 +1143,7 @@ export default function LandingPage() {
                 <a
                   key={item}
                   href="#"
-                  className="text-xs hover:text-white transition-colors"
+                  className="text-xs hover:text-gray-900 transition-colors"
                   style={{ color: "rgba(255,255,255,0.22)" }}
                 >
                   {item}
