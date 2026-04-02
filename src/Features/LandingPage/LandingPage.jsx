@@ -7,7 +7,8 @@ import {
   useInView,
   animate,
 } from "framer-motion";
-import heroVideo from "../../Files/Video/gse-video-raw-file.mp4";
+// TODO: Host video on external CDN and load from URL
+// import heroVideo from "../../Files/Video/gse-video-raw-file.mp4";
 
 /* ─────────────────────────────────────────────────────────────
    BRAND
@@ -427,7 +428,8 @@ export default function LandingPage() {
             muted
             loop
             className="absolute inset-0 h-full w-full object-cover"
-            src={heroVideo}
+            // TODO: Add video URL from CDN
+            // src={heroVideo}
           />
           <div
             className="absolute inset-0"
