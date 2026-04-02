@@ -46,19 +46,19 @@ export default function NavBar() {
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#060f07]/90 border-b border-[#9cc72b]/30 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]"
+          ? "bg-white/95 border-b border-[#d97706]/20 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.08)]"
           : "bg-transparent"
       }`}
     >
       <nav className="max-w-7xl mx-auto px-5 lg:px-12 h-[72px] flex items-center justify-between">
         <a
           href="#home"
-          className="inline-flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_0_28px_rgba(156,199,43,0.5)]"
+          className="inline-flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_0_28px_rgba(217,119,6,0.3)]"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#8dea25] to-[#74c000] text-xs font-black text-[#050a05]">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#d97706] to-[#f59e0b] text-xs font-black text-white">
             GG
           </span>
-          <span className="text-sm font-semibold tracking-wide text-white">
+          <span className="text-sm font-semibold tracking-wide text-gray-900">
             Greens Global
           </span>
         </a>
@@ -82,7 +82,7 @@ export default function NavBar() {
             >
               <motion.a
                 href={href}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium tracking-wide text-white/70 transition-all duration-250 hover:text-[#9cc72b] hover:tracking-wider"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium tracking-wide text-gray-700 transition-all duration-250 hover:text-[#d97706] hover:tracking-wider"
                 whileHover={{ scale: 1.02 }}
               >
                 {label}
@@ -99,7 +99,7 @@ export default function NavBar() {
           <motion.li variants={linkVariants}>
             <a
               href="#contact"
-              className="rounded-md bg-gradient-to-r from-[#9cc72b]/95 to-[#7fd646] px-5 py-2 text-sm font-bold text-[#050a05] shadow-[0_0_18px_rgba(156,199,43,0.72)] transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105"
+              className="rounded-md bg-gradient-to-r from-[#d97706]/95 to-[#f59e0b] px-5 py-2 text-sm font-bold text-white shadow-[0_0_18px_rgba(217,119,6,0.4)] transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105"
             >
               Get in Touch
             </a>
@@ -131,7 +131,7 @@ export default function NavBar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden overflow-hidden bg-[#050a05]/95 backdrop-blur-md border-t border-[#9cc72b]/20"
+            className="md:hidden overflow-hidden bg-gray-50/95 backdrop-blur-md border-t border-[#d97706]/10"
           >
             <ul className="px-6 py-4 flex flex-col gap-1">
               {LINKS.map(({ label, href, children }) => (
@@ -139,7 +139,7 @@ export default function NavBar() {
                   <a
                     href={href}
                     onClick={() => setMenuOpen(false)}
-                    className="block py-3 text-white/70 hover:text-white font-medium border-b border-[#ffffff1c] transition-colors"
+                    className="block py-3 text-gray-700 hover:text-[#d97706] font-medium border-b border-gray-200 transition-colors"
                   >
                     {label}
                   </a>
@@ -151,12 +151,12 @@ export default function NavBar() {
                           key={sub.label}
                           href={sub.href}
                           onClick={() => setMenuOpen(false)}
-                          className="block py-2 text-sm text-white/60 hover:text-white transition-colors"
+                          className="block py-2 text-sm text-gray-600 hover:text-[#d97706] transition-colors"
                         >
                           {sub.label}
                         </a>
                       ))}
-                      <div className="mt-1 h-px bg-gradient-to-r from-transparent via-[#9cc72b]/60 to-transparent" />
+                      <div className="mt-1 h-px bg-gradient-to-r from-transparent via-[#d97706]/40 to-transparent" />
                     </div>
                   )}
                 </li>
