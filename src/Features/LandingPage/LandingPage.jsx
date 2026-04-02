@@ -150,7 +150,7 @@ function DotNav({ active, onDotClick }) {
           {/* Label */}
           <span
             className="text-[10px] font-semibold tracking-[0.18em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none select-none"
-            style={{ color: i === active ? BRAND : "rgba(255,255,255,0.4)" }}
+            style={{ color: i === active ? BRAND : "rgba(0,0,0,0.45)" }}
           >
             {label}
           </span>
@@ -162,7 +162,7 @@ function DotNav({ active, onDotClick }) {
             style={{
               width: i === active ? 22 : 6,
               height: 6,
-              background: i === active ? BRAND : "rgba(255,255,255,0.22)",
+              background: i === active ? BRAND : "rgba(0,0,0,0.22)",
             }}
           />
         </div>
@@ -174,7 +174,13 @@ function DotNav({ active, onDotClick }) {
 /* ─────────────────────────────────────────────────────────────
    UI ─ ANIMATED COUNTER
 ───────────────────────────────────────────────────────────── */
-function Counter({ to, prefix = "", suffix = "", duration = 1.6 }) {
+function Counter({
+  to,
+  prefix = "",
+  suffix = "",
+  duration = 1.6,
+  grouping = true,
+}) {
   const ref = useRef(null);
   const motionVal = useMotionValue(0);
   const inView = useInView(ref, { once: true, amount: 0.8 });
@@ -185,7 +191,12 @@ function Counter({ to, prefix = "", suffix = "", duration = 1.6 }) {
     const ctrl = animate(motionVal, to, {
       duration,
       ease: "easeOut",
-      onUpdate: (v) => setDisplay(Math.round(v).toLocaleString()),
+      onUpdate: (v) =>
+        setDisplay(
+          grouping
+            ? Math.round(v).toLocaleString("en-US")
+            : Math.round(v).toString()
+        ),
     });
     return ctrl.stop;
   }, [inView, to, duration, motionVal]);
@@ -220,10 +231,28 @@ function Eyebrow({ children }) {
    DATA
 ───────────────────────────────────────────────────────────── */
 const STATS = [
-  { prefix: "", value: 1958, suffix: "", label: "Year Founded" },
-  { prefix: "$", value: 2, suffix: "B+", label: "Assets Under Management" },
-  { prefix: "", value: 40, suffix: "+", label: "Properties Managed" },
-  { prefix: "", value: 3, suffix: "", label: "Continents" },
+  {
+    prefix: "",
+    value: 1958,
+    suffix: "",
+    label: "Year Founded",
+    grouping: false,
+  },
+  {
+    prefix: "$",
+    value: 2,
+    suffix: "B+",
+    label: "Assets Under Management",
+    grouping: true,
+  },
+  {
+    prefix: "",
+    value: 40,
+    suffix: "+",
+    label: "Properties Managed",
+    grouping: true,
+  },
+  { prefix: "", value: 3, suffix: "", label: "Continents", grouping: true },
 ];
 
 const FEATURED = [
@@ -312,6 +341,23 @@ const staggerItem = {
 };
 
 const T = { duration: 0.75, ease: [0.22, 1, 0.36, 1] };
+const CARD_HOVER = {
+  y: -7,
+  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] },
+};
+const CARD_TAP = { scale: 0.995 };
+const FOOTER_STAGGER = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.12 } },
+};
+const FOOTER_ITEM = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 /* ═══════════════════════════════════════════════════════════════
    LANDING PAGE
@@ -681,7 +727,7 @@ export default function LandingPage() {
                 className="rounded-sm p-8 text-center"
                 style={{
                   background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(0,0,0,0.15)",
                 }}
               >
                 <p
@@ -692,11 +738,16 @@ export default function LandingPage() {
                     lineHeight: 1,
                   }}
                 >
-                  <Counter to={s.value} prefix={s.prefix} suffix={s.suffix} />
+                  <Counter
+                    to={s.value}
+                    prefix={s.prefix}
+                    suffix={s.suffix}
+                    grouping={s.grouping ?? true}
+                  />
                 </p>
                 <p
                   className="text-sm font-medium"
-                  style={{ color: "rgba(255,255,255,0.38)" }}
+                  style={{ color: "rgba(0,0,0,0.65)" }}
                 >
                   {s.label}
                 </p>
@@ -708,10 +759,10 @@ export default function LandingPage() {
           <motion.p
             {...inViewFadeUp}
             transition={{ ...T, delay: 0.4 }}
-            className="text-center mt-14 text-sm tracking-[0.18em] uppercase"
-            style={{ color: "rgba(255,255,255,0.18)" }}
+            className="text-center mt-14 text-sm tracking-[0.15em] uppercase font-semibold"
+            style={{ color: "rgba(0,0,0,0.78)" }}
           >
-            910 S. El Camino Real, Suite #202 · San Clemente, CA · Est. 1958
+            Established 1958 · Global Real Estate Investment & Development
           </motion.p>
         </div>
       </section>
@@ -755,19 +806,23 @@ export default function LandingPage() {
               <motion.div
                 key={p.name + p.location}
                 {...staggerItem}
-                whileHover={{ y: -7, transition: { duration: 0.22 } }}
+                whileHover={CARD_HOVER}
+                whileTap={CARD_TAP}
                 className="rounded-sm p-7 flex flex-col gap-4 cursor-pointer group"
                 style={{
-                  background: "rgba(0,0,0,0.04)",
+                  background: "#ffffff",
                   border: "1px solid rgba(0,0,0,0.15)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = `${BRAND}40`;
-                  e.currentTarget.style.background = `${BRAND}08`;
+                  e.currentTarget.style.background = "#ffffff";
+                  e.currentTarget.style.boxShadow =
+                    "0 10px 24px rgba(0,0,0,0.06)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
-                  e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                  e.currentTarget.style.background = "#ffffff";
+                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -798,7 +853,7 @@ export default function LandingPage() {
                 </p>
                 <div
                   className="flex items-center justify-end pt-3"
-                  style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+                  style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
                 >
                   <span
                     className="text-xs font-bold transition-colors"
@@ -851,16 +906,18 @@ export default function LandingPage() {
               <motion.div
                 key={s.title}
                 {...staggerItem}
+                whileHover={CARD_HOVER}
+                whileTap={CARD_TAP}
                 className="p-7 rounded-sm flex flex-col gap-5"
                 style={{
                   background: "rgba(255,255,255,0.022)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(0,0,0,0.15)",
                 }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.borderColor = `${BRAND}35`)
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")
+                  (e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)")
                 }
               >
                 <span
@@ -875,7 +932,7 @@ export default function LandingPage() {
                   </h3>
                   <p
                     className="text-sm leading-relaxed"
-                    style={{ color: "rgba(255,255,255,0.4)" }}
+                    style={{ color: "rgba(0,0,0,0.65)" }}
                   >
                     {s.desc}
                   </p>
@@ -913,7 +970,7 @@ export default function LandingPage() {
             </h2>
             <p
               className="mb-4 leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.48)", lineHeight: 1.8 }}
+              style={{ color: "rgba(0,0,0,0.68)", lineHeight: 1.8 }}
             >
               Founded in 1958 and headquartered in San Clemente, California,
               Greens Global is a privately held real estate investment and
@@ -922,7 +979,7 @@ export default function LandingPage() {
             </p>
             <p
               className="mb-10 leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.32)", lineHeight: 1.8 }}
+              style={{ color: "rgba(0,0,0,0.6)", lineHeight: 1.8 }}
             >
               Our integrated model combines institutional capital discipline
               with hands-on operational excellence — from site selection through
@@ -937,12 +994,14 @@ export default function LandingPage() {
                 { year: "2010s", event: "REIT Partnerships" },
                 { year: "2023", event: "Escondido Opens" },
               ].map((item, i) => (
-                <div
+                <motion.div
                   key={item.year}
                   className="p-4 rounded-sm"
+                  whileHover={CARD_HOVER}
+                  whileTap={CARD_TAP}
                   style={{
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(255,255,255,0.05)",
+                    background: "#ffffff",
+                    border: "1px solid rgba(0,0,0,0.12)",
                   }}
                 >
                   <p
@@ -951,13 +1010,10 @@ export default function LandingPage() {
                   >
                     {item.year}
                   </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(255,255,255,0.35)" }}
-                  >
+                  <p className="text-xs" style={{ color: "rgba(0,0,0,0.55)" }}>
                     {item.event}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -966,12 +1022,14 @@ export default function LandingPage() {
           <motion.div {...inViewFadeRight} transition={{ ...T, delay: 0.15 }}>
             <div className="grid grid-cols-2 gap-4 mb-6">
               {STATS.map((s) => (
-                <div
+                <motion.div
                   key={s.label}
                   className="p-7 rounded-sm text-center"
+                  whileHover={CARD_HOVER}
+                  whileTap={CARD_TAP}
                   style={{
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "#ffffff",
+                    border: "1px solid rgba(0,0,0,0.12)",
                   }}
                 >
                   <p
@@ -982,22 +1040,29 @@ export default function LandingPage() {
                       lineHeight: 1,
                     }}
                   >
-                    <Counter to={s.value} prefix={s.prefix} suffix={s.suffix} />
+                    <Counter
+                      to={s.value}
+                      prefix={s.prefix}
+                      suffix={s.suffix}
+                      grouping={s.grouping ?? true}
+                    />
                   </p>
                   <p
                     className="text-xs font-medium"
-                    style={{ color: "rgba(255,255,255,0.35)" }}
+                    style={{ color: "rgba(0,0,0,0.55)" }}
                   >
                     {s.label}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
 
-            <div
+            <motion.div
               className="p-7 rounded-sm"
+              whileHover={CARD_HOVER}
+              whileTap={CARD_TAP}
               style={{
-                background: `${BRAND}0e`,
+                background: "#ffffff",
                 border: `1px solid ${BRAND}25`,
               }}
             >
@@ -1006,14 +1071,14 @@ export default function LandingPage() {
                 style={{ color: "rgba(0,0,0,0.6)" }}
               >
                 <span className="font-bold text-gray-900">
-                  910 S. El Camino Real, Suite #202
+                  Investor & Partner Relations
                 </span>
                 <br />
-                San Clemente, CA 92672
+                Reach out to discuss opportunities
                 <br />
                 <span style={{ color: BRAND }}>+1 (949) 546-0560</span>
               </p>
-            </div>
+            </motion.div>
 
             <button
               onClick={() => scrollToSection(5)}
@@ -1098,24 +1163,52 @@ export default function LandingPage() {
                 +1 (949) 546-0560
               </a>
             </motion.div>
-            <motion.p
+            <motion.div
               {...inViewFadeUp}
               transition={{ ...T, delay: 0.45 }}
-              className="mt-10 text-xs tracking-widest uppercase"
-              style={{ color: "rgba(255,255,255,0.18)" }}
+              className="mt-10 mx-auto relative overflow-hidden rounded-sm px-5 py-3 border"
+              style={{
+                borderColor: "rgba(156,199,43,0.35)",
+                background: "#ffffff",
+              }}
             >
-              910 S. El Camino Real, Suite #202 · San Clemente, CA 92672
-            </motion.p>
+              <motion.span
+                aria-hidden
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(100deg, rgba(156,199,43,0) 10%, rgba(156,199,43,0.22) 50%, rgba(156,199,43,0) 90%)",
+                }}
+                animate={{ x: ["-130%", "130%"] }}
+                transition={{ duration: 3.1, ease: "linear", repeat: Infinity }}
+              />
+              <span
+                className="relative text-xs tracking-[0.16em] uppercase font-semibold"
+                style={{ color: "rgba(0,0,0,0.78)" }}
+              >
+                910 S. El Camino Real, Suite #202 · San Clemente, CA 92672
+              </span>
+            </motion.div>
           </div>
         </div>
 
         {/* Footer — pinned to bottom of this section */}
         <footer
           className="relative z-10 shrink-0 py-7"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+          style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
         >
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.75 }}
+            variants={FOOTER_STAGGER}
+            className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <motion.div
+              variants={FOOTER_ITEM}
+              whileHover={{ y: -2 }}
+              className="flex items-center gap-3"
+            >
               <div
                 className="w-7 h-7 rounded-sm flex items-center justify-center"
                 style={{ background: BRAND }}
@@ -1133,24 +1226,29 @@ export default function LandingPage() {
                   EST. 1958
                 </p>
               </div>
-            </div>
-            <p className="text-xs" style={{ color: "rgba(0,0,0,0.3)" }}>
+            </motion.div>
+            <motion.p
+              variants={FOOTER_ITEM}
+              className="text-xs"
+              style={{ color: "rgba(0,0,0,0.3)" }}
+            >
               © {new Date().getFullYear()} Greens Global, Inc. All Rights
               Reserved.
-            </p>
-            <div className="flex gap-5">
+            </motion.p>
+            <motion.div variants={FOOTER_ITEM} className="flex gap-5">
               {["Privacy Policy", "Employee Portal", "Careers"].map((item) => (
-                <a
+                <motion.a
                   key={item}
                   href="#"
                   className="text-xs hover:text-gray-900 transition-colors"
-                  style={{ color: "rgba(255,255,255,0.22)" }}
+                  style={{ color: "rgba(0,0,0,0.55)" }}
+                  whileHover={{ y: -2 }}
                 >
                   {item}
-                </a>
+                </motion.a>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </footer>
       </section>
     </main>
