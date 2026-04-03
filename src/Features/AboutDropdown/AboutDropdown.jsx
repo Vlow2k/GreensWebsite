@@ -36,7 +36,7 @@ const itemVariants = {
   },
 };
 
-const AboutDropdown = ({ items, open, scrolled = false }) => {
+const AboutDropdown = ({ items, open, scrolled = false, onNavigate }) => {
   return (
     <div
       className="absolute left-0 top-full pt-2 w-[min(520px,calc(100vw-2rem))] z-40"
@@ -103,6 +103,7 @@ const AboutDropdown = ({ items, open, scrolled = false }) => {
               <motion.a
                 key={sub.label}
                 href={sub.href}
+                onClick={(e) => onNavigate?.(sub, e)}
                 variants={itemVariants}
                 whileHover={{ y: -2 }}
                 className="group rounded-xl px-4 py-3 transition-colors duration-200"

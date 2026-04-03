@@ -6,17 +6,35 @@ import LandingPage from "./Features/LandingPage/LandingPage";
 const PortfolioPage = lazy(
   () => import("./Features/PortfolioPage/PortfolioPage")
 );
+const OurTeamPage = lazy(() => import("./Features/OurTeamPage/OurTeamPage"));
+const AboutUs = lazy(() => import("./Features/AboutUs/AboutUs"));
 
 export default function App() {
-  const [portfolioOpen, setPortfolioOpen] = useState(false);
+  const [activePage, setActivePage] = useState("home");
+
   const openPortfolio = () => {
-    setPortfolioOpen(true);
+    setActivePage("portfolio");
     if (window.location.hash !== "#portfolio") {
       window.history.replaceState(null, "", "#portfolio");
     }
   };
-  const closePortfolio = () => {
-    setPortfolioOpen(false);
+
+  const openTeam = () => {
+    setActivePage("team");
+    if (window.location.hash !== "#team") {
+      window.history.replaceState(null, "", "#team");
+    }
+  };
+
+  const openAbout = () => {
+    setActivePage("about");
+    if (window.location.hash !== "#about") {
+      window.history.replaceState(null, "", "#about");
+    }
+  };
+
+  const goHome = () => {
+    setActivePage("home");
     if (window.location.hash !== "#home") {
       window.history.replaceState(null, "", "#home");
     }
@@ -27,9 +45,13 @@ export default function App() {
     const syncFromHash = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#portfolio") {
-        setPortfolioOpen(true);
-      } else if (hash === "#home" || hash === "") {
-        setPortfolioOpen(false);
+        setActivePage("portfolio");
+      } else if (hash === "#team") {
+        setActivePage("team");
+      } else if (hash === "#about") {
+        setActivePage("about");
+      } else {
+        setActivePage("home");
       }
     };
 
@@ -42,14 +64,26 @@ export default function App() {
     <>
       <NavBar
         onOpenPortfolio={openPortfolio}
-        onGoHome={closePortfolio}
-        isPortfolioPage={portfolioOpen}
+        onOpenTeam={openTeam}
+        onOpenAbout={openAbout}
+        onGoHome={goHome}
+        isPortfolioPage={activePage === "portfolio"}
+        isTeamPage={activePage === "team"}
+        isAboutPage={activePage === "about"}
       />
 
       <AnimatePresence mode="wait">
-        {portfolioOpen ? (
+        {activePage === "portfolio" ? (
           <Suspense fallback={null}>
             <PortfolioPage />
+          </Suspense>
+        ) : activePage === "team" ? (
+          <Suspense fallback={null}>
+            <OurTeamPage />
+          </Suspense>
+        ) : activePage === "about" ? (
+          <Suspense fallback={null}>
+            <AboutUs />
           </Suspense>
         ) : (
           <LandingPage onOpenPortfolio={openPortfolio} />

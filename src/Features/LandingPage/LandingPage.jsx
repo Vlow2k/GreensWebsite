@@ -359,6 +359,42 @@ const FOOTER_ITEM = {
   },
 };
 
+function SectionAccent() {
+  return (
+    <>
+      <motion.div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[58%] pointer-events-none"
+        style={{
+          background: `linear-gradient(180deg, ${BRAND}33 0%, ${BRAND}1c 44%, transparent 100%)`,
+        }}
+        animate={{ opacity: [0.9, 1, 0.9] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="absolute left-1/2 top-[26%] h-[420px] w-[820px] -translate-x-1/2 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${BRAND}3d 0%, ${BRAND}26 42%, transparent 76%)`,
+          filter: "blur(12px)",
+        }}
+        animate={{ scale: [1, 1.045, 1] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="absolute -right-24 top-20 h-56 w-56 rounded-full pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, ${BRAND}33 0%, transparent 72%)`,
+          filter: "blur(8px)",
+        }}
+        animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    LANDING PAGE
 ═══════════════════════════════════════════════════════════════ */
@@ -444,7 +480,7 @@ export default function LandingPage({ onOpenPortfolio }) {
               minHeight: "56.25vw",
               transform: "translate(-50%, -50%)",
               pointerEvents: "none",
-              filter: "brightness(0.54) contrast(1.02) saturate(0.9)",
+              filter: "brightness(0.66) contrast(1.03) saturate(0.95)",
             }}
           />
           <div
@@ -452,7 +488,7 @@ export default function LandingPage({ onOpenPortfolio }) {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to right, rgba(6,12,24,0.72) 0%, rgba(6,12,24,0.56) 34%, rgba(6,12,24,0.3) 54%, rgba(6,12,24,0.5) 100%)",
+                "linear-gradient(to right, rgba(6,12,24,0.58) 0%, rgba(6,12,24,0.44) 34%, rgba(6,12,24,0.22) 54%, rgba(6,12,24,0.4) 100%)",
             }}
           />
           <div
@@ -460,7 +496,7 @@ export default function LandingPage({ onOpenPortfolio }) {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(2,6,14,0.52) 0%, rgba(2,6,14,0.24) 24%, rgba(2,6,14,0.56) 100%)",
+                "linear-gradient(180deg, rgba(2,6,14,0.42) 0%, rgba(2,6,14,0.18) 24%, rgba(2,6,14,0.44) 100%)",
             }}
           />
         </motion.div>
@@ -631,13 +667,36 @@ export default function LandingPage({ onOpenPortfolio }) {
         className="relative h-screen snap-start flex flex-col items-center justify-center overflow-hidden px-6 lg:px-14"
         style={{ background: "#ffffff" }}
       >
-        {/* Ambient glow - green gradient */}
-        <div
+        {/* Portfolio-like translucent green accent */}
+        <motion.div
           aria-hidden
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-x-0 top-0 h-[58%] pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${BRAND}08 0%, transparent 70%)`,
+            background: `linear-gradient(180deg, ${BRAND}33 0%, ${BRAND}1c 44%, transparent 100%)`,
           }}
+          animate={{ opacity: [0.9, 1, 0.9] }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute left-1/2 top-[26%] h-[420px] w-[820px] -translate-x-1/2 pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${BRAND}3d 0%, ${BRAND}26 42%, transparent 76%)`,
+            filter: "blur(12px)",
+          }}
+          animate={{ scale: [1, 1.045, 1] }}
+          transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <motion.div
+          aria-hidden
+          className="absolute -right-24 top-20 h-56 w-56 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${BRAND}33 0%, transparent 72%)`,
+            filter: "blur(8px)",
+          }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
         />
 
         <div className="relative z-10 max-w-5xl w-full mx-auto">
@@ -728,6 +787,8 @@ export default function LandingPage({ onOpenPortfolio }) {
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
         style={{ background: "#ffffff" }}
       >
+        <SectionAccent />
+
         <div className="max-w-7xl mx-auto w-full">
           {/* Header */}
           <motion.div {...inViewFadeUp} transition={T} className="mb-10">
@@ -829,6 +890,8 @@ export default function LandingPage({ onOpenPortfolio }) {
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
         style={{ background: "#ffffff" }}
       >
+        <SectionAccent />
+
         {/* Top glow */}
         <div
           aria-hidden
@@ -908,6 +971,8 @@ export default function LandingPage({ onOpenPortfolio }) {
         className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
         style={{ background: "#ffffff" }}
       >
+        <SectionAccent />
+
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
           {/* Left — story */}
           <motion.div {...inViewFadeLeft} transition={T}>
@@ -1052,6 +1117,8 @@ export default function LandingPage({ onOpenPortfolio }) {
         className="relative h-screen snap-start flex flex-col overflow-hidden"
         style={{ background: "#ffffff" }}
       >
+        <SectionAccent />
+
         {/* Glow blob */}
         <div
           aria-hidden

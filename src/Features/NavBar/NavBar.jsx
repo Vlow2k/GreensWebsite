@@ -30,20 +30,36 @@ const linkVariants = {
 
 export default function NavBar({
   onOpenPortfolio,
+  onOpenTeam,
+  onOpenAbout,
   onGoHome,
   isPortfolioPage = false,
+  isTeamPage = false,
+  isAboutPage = false,
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
-  const navLight = isPortfolioPage || scrolled;
+  const isSpecialPage = isPortfolioPage || isTeamPage || isAboutPage;
+  const navLight = isSpecialPage || scrolled;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleAboutDropdownNavigate = (sub, e) => {
+    if (sub.href === "#about") {
+      e.preventDefault();
+      onOpenAbout?.();
+    } else if (sub.href === "#team") {
+      e.preventDefault();
+      onOpenTeam?.();
+    }
+    setAboutOpen(false);
+  };
 
   return (
     <motion.header
@@ -114,7 +130,7 @@ export default function NavBar({
                   >
                     {label}
                   </motion.a>
-                ) : label === "Home" && isPortfolioPage ? (
+                ) : label === "Home" && isSpecialPage ? (
                   <motion.button
                     onClick={(e) => {
                       e.preventDefault();
@@ -128,9 +144,30 @@ export default function NavBar({
                   >
                     {label}
                   </motion.button>
+                ) : label === "About" ? (
+                  <motion.a
+                    href="#about"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenAbout?.();
+                    }}
+                    className={`inline-flex items-center px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                      navLight
+                        ? "text-slate-700 hover:text-[#9cc72b]"
+                        : "text-white/82 hover:text-[#9cc72b]"
+                    }`}
+                  >
+                    {label}
+                  </motion.a>
                 ) : (
                   <motion.a
                     href={href}
+                    onClick={(e) => {
+                      if (href === "#team") {
+                        e.preventDefault();
+                        onOpenTeam?.();
+                      }
+                    }}
                     className={`inline-flex items-center px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 ${
                       navLight
                         ? "text-slate-700 hover:text-[#9cc72b]"
@@ -147,6 +184,7 @@ export default function NavBar({
                       items={children}
                       open={aboutOpen}
                       scrolled={scrolled}
+                      onNavigate={handleAboutDropdownNavigate}
                     />
                   </AnimatePresence>
                 )}
@@ -208,7 +246,7 @@ export default function NavBar({
                     >
                       {label}
                     </a>
-                  ) : label === "Home" && isPortfolioPage ? (
+                  ) : label === "Home" && isSpecialPage ? (
                     <button
                       onClick={() => {
                         setMenuOpen(false);
@@ -218,6 +256,18 @@ export default function NavBar({
                     >
                       {label}
                     </button>
+                  ) : label === "About" ? (
+                    <a
+                      href="#about"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMenuOpen(false);
+                        onOpenAbout?.();
+                      }}
+                      className="block w-full text-left border-b border-slate-200 py-3 font-medium text-slate-700 transition-colors hover:text-[#9cc72b]"
+                    >
+                      {label}
+                    </a>
                   ) : (
                     <a
                       href={href}
@@ -234,7 +284,16 @@ export default function NavBar({
                         <a
                           key={sub.label}
                           href={sub.href}
-                          onClick={() => setMenuOpen(false)}
+                          onClick={(e) => {
+                            if (sub.href === "#team") {
+                              e.preventDefault();
+                              onOpenTeam?.();
+                            } else if (sub.href === "#about") {
+                              e.preventDefault();
+                              onOpenAbout?.();
+                            }
+                            setMenuOpen(false);
+                          }}
                           className="block py-2 text-sm text-slate-600 transition-colors hover:text-[#9cc72b]"
                         >
                           {sub.label}
