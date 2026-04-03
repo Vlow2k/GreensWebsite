@@ -227,11 +227,11 @@ export default function AboutUs() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       ref={containerRef}
-      className="relative h-screen overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth"
+      className="relative min-h-[100svh] overflow-y-auto overflow-x-hidden scroll-smooth lg:h-screen lg:snap-y lg:snap-mandatory"
       style={{ background: "#f1f5ee" }}
     >
       {/* 3D Background - Fixed */}
-      <div className="fixed inset-0 pointer-events-none -z-10 h-screen w-screen">
+      <div className="fixed inset-0 pointer-events-none -z-10 h-[100svh] w-screen">
         <Suspense fallback={null}>
           <Canvas
             camera={{ position: [0, 0, 4], fov: 75 }}
@@ -256,7 +256,7 @@ export default function AboutUs() {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: false, amount: 0.3 }}
-          className="relative min-h-screen w-full snap-start snap-always flex items-center justify-center px-5 py-24 overflow-hidden"
+          className="relative min-h-[100svh] w-full flex items-center justify-center overflow-hidden px-4 py-20 sm:px-5 md:px-8 md:py-24 lg:snap-start lg:snap-always"
           style={{
             background:
               section.type === "cta"
@@ -333,7 +333,7 @@ export default function AboutUs() {
                 >
                   {section.phase}
                 </span>
-                <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight text-slate-900 lg:text-7xl">
+                <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-7xl">
                   From Vision to
                   <br />
                   <span style={{ color: BRAND }}>Global Platform</span>

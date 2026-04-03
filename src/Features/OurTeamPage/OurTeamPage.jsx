@@ -435,7 +435,7 @@ export default function OurTeamPage() {
       />
 
       <header
-        className="sticky top-16 z-20 relative overflow-hidden"
+        className="relative overflow-hidden lg:sticky lg:top-16 lg:z-20"
         style={{
           background:
             "linear-gradient(135deg, #f8faf5 0%, #edf5e5 60%, #f4f9f0 100%)",
@@ -470,7 +470,7 @@ export default function OurTeamPage() {
               </p>
             </div>
             <div
-              className="grid grid-cols-4 rounded-2xl px-3 py-3"
+              className="grid w-full grid-cols-2 gap-y-3 rounded-2xl px-3 py-3 sm:w-auto sm:grid-cols-4 sm:gap-y-0"
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(15,23,42,0.09)",

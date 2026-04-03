@@ -1300,8 +1300,10 @@ export default function PortfolioPage() {
   const [stage, setStage] = useState("All");
   const [sector, setSector] = useState("All");
   const [country, setCountry] = useState("All");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const deferredSearch = useDeferredValue(search);
   const cardRefs = useRef({});
+  const searchInputRef = useRef(null);
 
   const countries = useMemo(
     () => ["All", ...new Set(PROPERTIES.map((p) => p.country))],
@@ -1373,6 +1375,46 @@ export default function PortfolioPage() {
     null;
   const hasFilters =
     search.trim() || stage !== "All" || sector !== "All" || country !== "All";
+
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return PROPERTIES.filter((p) => {
+      const matchName = p.name.toLowerCase().includes(q);
+      return (
+        matchName &&
+        (stage === "All" || p.stage === stage) &&
+        (sector === "All" || p.sector === sector) &&
+        (country === "All" || p.country === country)
+      );
+    })
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1;
+        const bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, 8);
+  }, [search, stage, sector, country]);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const frame = requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isSearchOpen]);
 
   /** Called from globe pin click or card click while in globe phase */
   const handleGlobeSelect = useCallback((id) => {
@@ -1449,13 +1491,35 @@ export default function PortfolioPage() {
     });
   }, []);
 
+  const handleSuggestionSelect = useCallback(
+    (id) => {
+      setIsSearchOpen(false);
+      if (viewMode === "list") {
+        openPropertyInInteractiveMap(id);
+        return;
+      }
+      if (phase === "map") {
+        handleMapSelect(id);
+      } else {
+        handleGlobeSelect(id);
+      }
+    },
+    [
+      viewMode,
+      phase,
+      openPropertyInInteractiveMap,
+      handleMapSelect,
+      handleGlobeSelect,
+    ]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex h-screen flex-col overflow-hidden"
+      className="flex min-h-[100svh] flex-col overflow-x-hidden lg:h-screen lg:overflow-hidden"
       style={{ background: "#f1f5ee", paddingTop: "4rem" }}
     >
       {/* ── DARK HERO ────────────────────────────────────── */}
@@ -1485,10 +1549,10 @@ export default function PortfolioPage() {
           }}
         />
 
-        <div className="relative mx-auto max-w-screen-xl px-5 py-6 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative mx-auto max-w-screen-xl px-5 py-4 lg:px-10">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="mb-1.5 flex items-center gap-3">
                 <span
                   className="h-px w-5 shrink-0"
                   style={{ background: BRAND }}
@@ -1500,11 +1564,11 @@ export default function PortfolioPage() {
                   GG · Portfolio
                 </span>
               </div>
-              <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 lg:text-4xl">
+              <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-slate-900 lg:text-[2.35rem]">
                 Our Portfolio
               </h1>
               <p
-                className="mt-1.5 max-w-md text-sm leading-relaxed"
+                className="mt-1 max-w-md text-[13px] leading-relaxed"
                 style={{ color: "rgba(15,23,42,0.52)" }}
               >
                 Current and realized assets across industrial, commercial, and
@@ -1512,188 +1576,81 @@ export default function PortfolioPage() {
               </p>
             </div>
             <div
-              className="flex items-center rounded-2xl px-2 py-3 lg:px-4"
+              className="w-full overflow-x-auto rounded-2xl px-2 py-2.5 lg:w-auto lg:px-3"
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(15,23,42,0.09)",
                 boxShadow: "0 2px 12px rgba(15,23,42,0.06)",
               }}
             >
-              {[
-                { value: TOTAL_COUNT, label: "Total Assets" },
-                { value: CURRENT_COUNT, label: "Current" },
-                { value: REALIZED_COUNT, label: "Realized" },
-                { value: PIPELINE_COUNT, label: "In Pipeline" },
-              ].map((s, i) => (
-                <div key={s.label} className="flex items-center">
-                  {i > 0 && (
-                    <div
-                      className="h-8 w-px mx-1 shrink-0"
-                      style={{ background: "rgba(15,23,42,0.1)" }}
-                    />
-                  )}
-                  <StatCounter value={s.value} label={s.label} />
-                </div>
-              ))}
+              <div className="flex min-w-[460px] items-center lg:min-w-0">
+                {[
+                  { value: TOTAL_COUNT, label: "Total Assets" },
+                  { value: CURRENT_COUNT, label: "Current" },
+                  { value: REALIZED_COUNT, label: "Realized" },
+                  { value: PIPELINE_COUNT, label: "In Pipeline" },
+                ].map((s, i) => (
+                  <div key={s.label} className="flex items-center">
+                    {i > 0 && (
+                      <div
+                        className="h-8 w-px mx-1 shrink-0"
+                        style={{ background: "rgba(15,23,42,0.1)" }}
+                      />
+                    )}
+                    <StatCounter value={s.value} label={s.label} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div
-            className="mt-3 rounded-2xl px-3 py-2"
-            style={{
-              background: "rgba(255,255,255,0.86)",
-              border: "1px solid rgba(15,23,42,0.09)",
-              boxShadow: "0 4px 16px rgba(15,23,42,0.05)",
-            }}
-          >
-            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
-              <div className="relative min-w-[220px] flex-1">
-                <svg
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="rgba(15,23,42,0.35)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="9" cy="9" r="6" />
-                  <path d="m17 17-3.5-3.5" />
-                </svg>
-                <input
-                  value={search}
-                  onChange={(e) =>
-                    startTransition(() => setSearch(e.target.value))
-                  }
-                  placeholder="Search properties..."
-                  className="w-full rounded-[12px] py-2 pl-9 pr-3 text-[12px] outline-none"
-                  style={{
-                    background: "rgba(15,23,42,0.04)",
-                    border: "1px solid rgba(15,23,42,0.09)",
-                    color: "#0f172a",
-                  }}
-                />
-              </div>
-
-              <select
-                value={stage}
-                onChange={(e) => setStage(e.target.value)}
-                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
-                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(15,23,42,0.12)",
-                  color: "rgba(15,23,42,0.7)",
-                }}
+          <div className="mt-2.5 flex items-center justify-between gap-3">
+            <p
+              className="text-[11px] font-semibold"
+              style={{ color: "rgba(15,23,42,0.52)" }}
+            >
+              <span className="font-bold text-slate-900">
+                {filtered.length}
+              </span>{" "}
+              {filtered.length === 1 ? "property" : "properties"}
+              {hasFilters ? " · filtered" : ""}
+            </p>
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200"
+              style={{
+                background: "#ffffff",
+                color: "#1f2937",
+                border: "1px solid rgba(15,23,42,0.12)",
+                boxShadow: "0 4px 14px rgba(15,23,42,0.08)",
+              }}
+              aria-label="Open search and filters"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {STAGE_OPTIONS.map((o) => (
-                  <option key={o} value={o}>
-                    Stage: {o}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={sector}
-                onChange={(e) => setSector(e.target.value)}
-                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
-                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(15,23,42,0.12)",
-                  color: "rgba(15,23,42,0.7)",
-                }}
-              >
-                {SECTOR_OPTIONS.map((o) => (
-                  <option key={o} value={o}>
-                    Sector: {o}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
-                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(15,23,42,0.12)",
-                  color: "rgba(15,23,42,0.7)",
-                }}
-              >
-                {countries.map((o) => (
-                  <option key={o} value={o}>
-                    Region: {o}
-                  </option>
-                ))}
-              </select>
-
-              {hasFilters && (
-                <button
-                  onClick={() => {
-                    setSearch("");
-                    setStage("All");
-                    setSector("All");
-                    setCountry("All");
-                  }}
-                  className="text-[11px] font-semibold whitespace-nowrap"
-                  style={{ color: "rgba(15,23,42,0.46)" }}
-                >
-                  Reset
-                </button>
-              )}
-
-              <p
-                className="text-[11px] whitespace-nowrap"
-                style={{ color: "rgba(15,23,42,0.52)" }}
-              >
-                <span className="font-bold text-slate-900">
-                  {filtered.length}
-                </span>{" "}
-                {filtered.length === 1 ? "property" : "properties"}
-              </p>
-
-              <div className="lg:ml-auto">
-                <div
-                  className="inline-flex rounded-full p-1"
-                  style={{
-                    background: "rgba(255,255,255,0.9)",
-                    border: "1px solid rgba(15,23,42,0.1)",
-                  }}
-                >
-                  {[
-                    { key: "interactive", label: "Interactive" },
-                    { key: "list", label: "List View" },
-                  ].map((opt) => {
-                    const active = viewMode === opt.key;
-                    return (
-                      <button
-                        key={opt.key}
-                        onClick={() => handleViewModeChange(opt.key)}
-                        className="rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-200"
-                        style={{
-                          background: active ? BRAND : "transparent",
-                          color: active ? "#13210f" : "rgba(15,23,42,0.52)",
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+                <circle cx="9" cy="9" r="6" />
+                <path d="m17 17-3.5-3.5" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
 
       {/* ── MAIN SPLIT ───────────────────────────────────── */}
       {viewMode === "interactive" ? (
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 p-3">
+        <div className="flex-1 min-h-0 flex flex-col gap-2 p-2 lg:gap-1.5 lg:p-1.5 lg:flex-row">
           {/* LEFT: Globe canvas + Map (layered, crossfade) */}
           <div
             className="relative lg:flex-1 rounded-3xl overflow-hidden"
-            style={{ minHeight: 300 }}
+            style={{ minHeight: 340 }}
           >
             {/* ── 3D GLOBE ── */}
             <motion.div
@@ -1882,7 +1839,7 @@ export default function PortfolioPage() {
 
           {/* RIGHT: property list */}
           <div
-            className="flex flex-col lg:w-[420px] xl:w-[460px] rounded-3xl overflow-hidden"
+            className="flex flex-col lg:w-[360px] xl:w-[400px] rounded-3xl overflow-hidden"
             style={{
               background: "#ffffff",
               border: "1px solid rgba(15,23,42,0.08)",
@@ -1890,7 +1847,7 @@ export default function PortfolioPage() {
             }}
           >
             {/* Card list */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3">
+            <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
               {filtered.length === 0 ? (
                 <div className="flex h-40 items-center justify-center">
                   <p
@@ -1933,7 +1890,7 @@ export default function PortfolioPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 p-3">
+        <div className="flex-1 min-h-0 p-1.5">
           <div
             className="h-full rounded-3xl overflow-hidden flex flex-col"
             style={{
@@ -1981,6 +1938,225 @@ export default function PortfolioPage() {
       )}
 
       <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[950] flex items-start justify-center p-4 md:p-8"
+            style={{
+              background: "rgba(15,23,42,0.26)",
+              backdropFilter: "blur(10px)",
+            }}
+            onClick={() => setIsSearchOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.99 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full max-w-5xl rounded-3xl p-4 md:p-5"
+              style={{
+                background: "rgba(255,255,255,0.95)",
+                border: "1px solid rgba(15,23,42,0.08)",
+                boxShadow: "0 28px 70px rgba(15,23,42,0.25)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-800">
+                  Search Portfolio
+                </h2>
+                <button
+                  onClick={() => setIsSearchOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none"
+                  style={{
+                    background: "rgba(15,23,42,0.08)",
+                    color: "rgba(15,23,42,0.55)",
+                  }}
+                  aria-label="Close search"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 lg:flex-nowrap">
+                <div className="relative min-w-[220px] flex-1">
+                  <svg
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="rgba(15,23,42,0.35)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="9" cy="9" r="6" />
+                    <path d="m17 17-3.5-3.5" />
+                  </svg>
+                  <input
+                    ref={searchInputRef}
+                    value={search}
+                    onChange={(e) =>
+                      startTransition(() => setSearch(e.target.value))
+                    }
+                    placeholder="Type a property name..."
+                    className="w-full rounded-[12px] py-2.5 pl-9 pr-3 text-[13px] outline-none"
+                    style={{
+                      background: "rgba(15,23,42,0.04)",
+                      border: "1px solid rgba(15,23,42,0.09)",
+                      color: "#0f172a",
+                    }}
+                  />
+                </div>
+
+                <select
+                  value={stage}
+                  onChange={(e) => setStage(e.target.value)}
+                  className="rounded-[12px] px-3 py-2.5 text-[12px] font-semibold outline-none"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    color: "rgba(15,23,42,0.7)",
+                  }}
+                >
+                  {STAGE_OPTIONS.map((o) => (
+                    <option key={o} value={o}>
+                      Stage: {o}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={sector}
+                  onChange={(e) => setSector(e.target.value)}
+                  className="rounded-[12px] px-3 py-2.5 text-[12px] font-semibold outline-none"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    color: "rgba(15,23,42,0.7)",
+                  }}
+                >
+                  {SECTOR_OPTIONS.map((o) => (
+                    <option key={o} value={o}>
+                      Sector: {o}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="rounded-[12px] px-3 py-2.5 text-[12px] font-semibold outline-none"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    color: "rgba(15,23,42,0.7)",
+                  }}
+                >
+                  {countries.map((o) => (
+                    <option key={o} value={o}>
+                      Region: {o}
+                    </option>
+                  ))}
+                </select>
+
+                {hasFilters && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setStage("All");
+                      setSector("All");
+                      setCountry("All");
+                    }}
+                    className="text-[11px] font-semibold whitespace-nowrap"
+                    style={{ color: "rgba(15,23,42,0.46)" }}
+                  >
+                    Reset
+                  </button>
+                )}
+
+                <p
+                  className="text-[11px] whitespace-nowrap"
+                  style={{ color: "rgba(15,23,42,0.52)" }}
+                >
+                  <span className="font-bold text-slate-900">
+                    {filtered.length}
+                  </span>{" "}
+                  {filtered.length === 1 ? "property" : "properties"}
+                </p>
+
+                <div className="lg:ml-auto">
+                  <div
+                    className="inline-flex rounded-full p-1"
+                    style={{
+                      background: "rgba(255,255,255,0.9)",
+                      border: "1px solid rgba(15,23,42,0.1)",
+                    }}
+                  >
+                    {[
+                      { key: "interactive", label: "Interactive" },
+                      { key: "list", label: "List View" },
+                    ].map((opt) => {
+                      const active = viewMode === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => handleViewModeChange(opt.key)}
+                          className="rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-200"
+                          style={{
+                            background: active ? BRAND : "transparent",
+                            color: active ? "#13210f" : "rgba(15,23,42,0.52)",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <AnimatePresence initial={false}>
+                {suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.16 }}
+                    className="mt-3 rounded-2xl overflow-hidden"
+                    style={{
+                      background: "rgba(255,255,255,0.95)",
+                      border: "1px solid rgba(15,23,42,0.09)",
+                    }}
+                  >
+                    {suggestions.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleSuggestionSelect(p.id)}
+                        className="w-full border-b px-4 py-3 text-left transition-colors duration-150 last:border-b-0"
+                        style={{ borderColor: "rgba(15,23,42,0.06)" }}
+                      >
+                        <p className="text-[13px] font-bold text-slate-900">
+                          {p.name}
+                        </p>
+                        <p
+                          className="mt-0.5 text-[11px]"
+                          style={{ color: "rgba(15,23,42,0.52)" }}
+                        >
+                          {p.location}
+                        </p>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        )}
+
         {modalProperty && viewMode === "list" && (
           <PropertyDetailModal
             property={modalProperty}
@@ -1994,7 +2170,7 @@ export default function PortfolioPage() {
       </AnimatePresence>
 
       <footer
-        className="relative z-10 shrink-0 py-7"
+        className="relative z-10 py-5"
         style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
       >
         <motion.div

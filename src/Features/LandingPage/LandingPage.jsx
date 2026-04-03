@@ -416,6 +416,7 @@ export default function LandingPage({ onOpenPortfolio }) {
     contactRef,
   ];
   const [activeSection, setActiveSection] = useState(0);
+  const snapLockRef = useRef(false);
 
   /* ── Intersection observer → active dot ── */
   useEffect(() => {
@@ -431,6 +432,41 @@ export default function LandingPage({ onOpenPortfolio }) {
     });
     return () => observers.forEach((o) => o.disconnect());
   }, []); // eslint-disable-line
+
+  useEffect(() => {
+    const isDesktopLike = () =>
+      window.matchMedia("(min-width: 1024px)").matches;
+
+    const handleWheel = (event) => {
+      if (!isDesktopLike()) return;
+      if (Math.abs(event.deltaY) < 12) return;
+
+      event.preventDefault();
+
+      if (snapLockRef.current) return;
+
+      const direction = event.deltaY > 0 ? 1 : -1;
+      const nextIndex = Math.max(
+        0,
+        Math.min(sectionRefs.length - 1, activeSection + direction)
+      );
+
+      if (nextIndex === activeSection) return;
+
+      snapLockRef.current = true;
+      sectionRefs[nextIndex].current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      window.setTimeout(() => {
+        snapLockRef.current = false;
+      }, 760);
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [activeSection]);
 
   const scrollToSection = useCallback((i) => {
     sectionRefs[i].current?.scrollIntoView({ behavior: "smooth" });
@@ -459,7 +495,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={heroRef}
         id="home"
-        className="relative h-screen overflow-hidden snap-start"
+        className="relative min-h-[100svh] snap-start overflow-hidden md:h-[100svh]"
       >
         {/* Video background */}
         <motion.div
@@ -506,7 +542,7 @@ export default function LandingPage({ onOpenPortfolio }) {
           style={{ y: heroTextY, opacity: heroTextOp }}
           className="absolute inset-0 z-20 flex items-center"
         >
-          <div className="max-w-7xl mx-auto px-6 lg:px-14 w-full pt-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-14 w-full pt-20">
             <motion.div
               initial="hidden"
               animate="show"
@@ -664,7 +700,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={overviewRef}
         id="overview"
-        className="relative h-screen snap-start flex flex-col items-center justify-center overflow-hidden px-6 lg:px-14"
+        className="relative min-h-[100svh] snap-start flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-14 md:h-[100svh]"
         style={{ background: "#ffffff" }}
       >
         {/* Portfolio-like translucent green accent */}
@@ -784,7 +820,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={portfolioRef}
         id="portfolio"
-        className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
+        className="relative min-h-[100svh] snap-start flex flex-col justify-center overflow-hidden px-4 sm:px-6 lg:px-14 md:h-[100svh]"
         style={{ background: "#ffffff" }}
       >
         <SectionAccent />
@@ -887,7 +923,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={servicesRef}
         id="services"
-        className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
+        className="relative min-h-[100svh] snap-start flex flex-col justify-center overflow-hidden px-4 sm:px-6 lg:px-14 md:h-[100svh]"
         style={{ background: "#ffffff" }}
       >
         <SectionAccent />
@@ -968,7 +1004,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={aboutRef}
         id="about"
-        className="relative h-screen snap-start flex flex-col justify-center overflow-hidden px-6 lg:px-14"
+        className="relative min-h-[100svh] snap-start flex flex-col justify-center overflow-hidden px-4 sm:px-6 lg:px-14 md:h-[100svh]"
         style={{ background: "#ffffff" }}
       >
         <SectionAccent />
@@ -1114,7 +1150,7 @@ export default function LandingPage({ onOpenPortfolio }) {
       <section
         ref={contactRef}
         id="contact"
-        className="relative h-screen snap-start flex flex-col overflow-hidden"
+        className="relative min-h-[100svh] snap-start flex flex-col overflow-hidden md:h-[100svh]"
         style={{ background: "#ffffff" }}
       >
         <SectionAccent />

@@ -38,17 +38,54 @@ export default function NavBar({
   isAboutPage = false,
 }) {
   const [scrolled, setScrolled] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
   const isSpecialPage = isPortfolioPage || isTeamPage || isAboutPage;
-  const navLight = isSpecialPage || scrolled;
+  const navLight = isSpecialPage || scrolled || !heroVisible;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (isSpecialPage) {
+      setHeroVisible(false);
+      return;
+    }
+
+    let observer;
+    let retryId;
+
+    const observeHeroSection = () => {
+      const heroSection = document.getElementById("home");
+      if (!heroSection) {
+        retryId = window.setTimeout(observeHeroSection, 120);
+        return;
+      }
+
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          setHeroVisible(
+            entry.isIntersecting && entry.intersectionRatio >= 0.55
+          );
+        },
+        { threshold: [0.15, 0.55, 0.85] }
+      );
+
+      observer.observe(heroSection);
+    };
+
+    observeHeroSection();
+
+    return () => {
+      if (observer) observer.disconnect();
+      if (retryId) window.clearTimeout(retryId);
+    };
+  }, [isSpecialPage]);
 
   const handleAboutDropdownNavigate = (sub, e) => {
     if (sub.href === "#about") {
@@ -75,7 +112,7 @@ export default function NavBar({
             : "bg-black/8 border-transparent backdrop-blur-sm"
         }`}
       >
-        <div className="max-w-6xl mx-auto h-full w-full px-6 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto h-full w-full px-4 sm:px-6 lg:px-7 flex items-center justify-between">
           <a
             href="#home"
             onClick={(e) => {
@@ -99,7 +136,7 @@ export default function NavBar({
           </a>
 
           <motion.ul
-            className="hidden md:flex items-center gap-0.5 shrink-0"
+            className="hidden lg:flex items-center gap-0.5 shrink-0"
             initial="hidden"
             animate="visible"
             variants={{
@@ -202,7 +239,7 @@ export default function NavBar({
           </motion.ul>
 
           <button
-            className="md:hidden flex flex-col gap-1.5 p-2"
+            className="lg:hidden flex flex-col gap-1.5 p-2"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Menu"
           >
@@ -229,7 +266,7 @@ export default function NavBar({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-xl"
+            className="lg:hidden overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-xl"
           >
             <ul className="px-6 py-4 flex flex-col gap-1">
               {LINKS.map(({ label, href, children }) => (
