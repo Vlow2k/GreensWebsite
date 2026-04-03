@@ -28,10 +28,16 @@ const linkVariants = {
   },
 };
 
-export default function NavBar() {
+export default function NavBar({
+  onOpenPortfolio,
+  onGoHome,
+  isPortfolioPage = false,
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  const navLight = isPortfolioPage || scrolled;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
@@ -44,84 +50,138 @@ export default function NavBar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/95 border-b border-[#9cc72b]/20 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.08)]"
-          : "bg-transparent"
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
-      <nav className="max-w-7xl mx-auto px-5 lg:px-12 h-[72px] flex items-center justify-between">
-        <a
-          href="#home"
-          className="inline-flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_0_28px_rgba(156,199,43,0.3)]"
-        >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#9cc72b] to-[#7fd646] text-xs font-black text-white">
-            GG
-          </span>
-          <span className="text-sm font-semibold tracking-wide text-gray-900">
-            Greens Global
-          </span>
-        </a>
-
-        <motion.ul
-          className="hidden md:flex items-center gap-1"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.05 } },
-          }}
-        >
-          {LINKS.map(({ label, href, children }) => (
-            <motion.li
-              key={label}
-              className="relative"
-              onMouseEnter={() => children && setAboutOpen(true)}
-              onMouseLeave={() => children && setAboutOpen(false)}
-              variants={linkVariants}
-            >
-              <motion.a
-                href={href}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium tracking-wide text-gray-700 transition-all duration-250 hover:text-[#9cc72b] hover:tracking-wider"
-                whileHover={{ scale: 1.02 }}
-              >
-                {label}
-              </motion.a>
-
-              {children && aboutOpen && (
-                <AnimatePresence>
-                  <AboutDropdown items={children} open={aboutOpen} />
-                </AnimatePresence>
-              )}
-            </motion.li>
-          ))}
-
-          <motion.li variants={linkVariants}>
-            <a
-              href="#contact"
-              className="rounded-md bg-gradient-to-r from-[#9cc72b]/95 to-[#7fd646] px-5 py-2 text-sm font-bold text-white shadow-[0_0_18px_rgba(156,199,43,0.4)] transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105"
-            >
-              Get in Touch
-            </a>
-          </motion.li>
-        </motion.ul>
-
-        <button
-          className="md:hidden p-2 flex flex-col gap-1.5"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Menu"
-        >
-          {[0, 1, 2].map((i) => (
+      <nav
+        className={`w-full h-16 transition-all duration-300 border-b ${
+          navLight
+            ? "bg-white/88 border-slate-200/70 backdrop-blur-xl shadow-[0_6px_20px_rgba(2,6,23,0.07)]"
+            : "bg-black/8 border-transparent backdrop-blur-sm"
+        }`}
+      >
+        <div className="max-w-6xl mx-auto h-full w-full px-6 flex items-center justify-between">
+          <a
+            href="#home"
+            onClick={(e) => {
+              if (isPortfolioPage) {
+                e.preventDefault();
+                onGoHome?.();
+              }
+            }}
+            className="inline-flex items-center gap-3 px-1.5 py-1.5 transition-all duration-300"
+          >
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#9cc72b] to-[#7fd646] text-xs font-black text-white">
+              GG
+            </span>
             <span
-              key={i}
-              className={`block h-0.5 w-6 bg-white transition-all duration-300 ${
-                i === 0 && menuOpen ? "rotate-45 translate-y-2" : ""
-              } ${i === 1 && menuOpen ? "opacity-0" : ""} ${
-                i === 2 && menuOpen ? "-rotate-45 -translate-y-2" : ""
+              className={`text-sm font-semibold tracking-[0.01em] ${
+                navLight ? "text-slate-900" : "text-white"
               }`}
-            />
-          ))}
-        </button>
+            >
+              Greens Global
+            </span>
+          </a>
+
+          <motion.ul
+            className="hidden md:flex items-center gap-0.5 shrink-0"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.05 } },
+            }}
+          >
+            {LINKS.map(({ label, href, children }) => (
+              <motion.li
+                key={label}
+                className="relative"
+                onMouseEnter={() => children && setAboutOpen(true)}
+                onMouseLeave={() => children && setAboutOpen(false)}
+                variants={linkVariants}
+              >
+                {label === "Portfolio" ? (
+                  <motion.a
+                    href="#portfolio"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenPortfolio?.();
+                    }}
+                    className={`inline-flex items-center px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                      navLight
+                        ? "text-slate-700 hover:text-[#9cc72b]"
+                        : "text-white/82 hover:text-[#9cc72b]"
+                    }`}
+                  >
+                    {label}
+                  </motion.a>
+                ) : label === "Home" && isPortfolioPage ? (
+                  <motion.button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onGoHome?.();
+                    }}
+                    className={`inline-flex items-center px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                      navLight
+                        ? "text-slate-700 hover:text-[#9cc72b]"
+                        : "text-white/82 hover:text-[#9cc72b]"
+                    }`}
+                  >
+                    {label}
+                  </motion.button>
+                ) : (
+                  <motion.a
+                    href={href}
+                    className={`inline-flex items-center px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                      navLight
+                        ? "text-slate-700 hover:text-[#9cc72b]"
+                        : "text-white/82 hover:text-[#9cc72b]"
+                    }`}
+                  >
+                    {label}
+                  </motion.a>
+                )}
+
+                {children && aboutOpen && (
+                  <AnimatePresence>
+                    <AboutDropdown
+                      items={children}
+                      open={aboutOpen}
+                      scrolled={scrolled}
+                    />
+                  </AnimatePresence>
+                )}
+              </motion.li>
+            ))}
+
+            <motion.li variants={linkVariants}>
+              <a
+                href="#contact"
+                className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-[#9cc72b] px-4 py-2 text-[12px] font-semibold text-white transition-all duration-200 hover:opacity-95 hover:shadow-[0_0_24px_rgba(156,199,43,0.42)] lg:px-5"
+              >
+                Get in Touch
+              </a>
+            </motion.li>
+          </motion.ul>
+
+          <button
+            className="md:hidden flex flex-col gap-1.5 p-2"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Menu"
+          >
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`block h-0.5 w-6 transition-all duration-300 ${
+                  navLight ? "bg-slate-900" : "bg-white"
+                } ${
+                  i === 0 && menuOpen ? "rotate-45 translate-y-2" : ""
+                } ${i === 1 && menuOpen ? "opacity-0" : ""} ${
+                  i === 2 && menuOpen ? "-rotate-45 -translate-y-2" : ""
+                }`}
+              />
+            ))}
+          </button>
+        </div>
       </nav>
 
       <AnimatePresence>
@@ -131,18 +191,42 @@ export default function NavBar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden overflow-hidden bg-gray-50/95 backdrop-blur-md border-t border-[#9cc72b]/10"
+            className="md:hidden overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-xl"
           >
             <ul className="px-6 py-4 flex flex-col gap-1">
               {LINKS.map(({ label, href, children }) => (
                 <li key={label}>
-                  <a
-                    href={href}
-                    onClick={() => setMenuOpen(false)}
-                    className="block py-3 text-gray-700 hover:text-[#9cc72b] font-medium border-b border-gray-200 transition-colors"
-                  >
-                    {label}
-                  </a>
+                  {label === "Portfolio" ? (
+                    <a
+                      href="#portfolio"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMenuOpen(false);
+                        onOpenPortfolio?.();
+                      }}
+                      className="block w-full text-left border-b border-slate-200 py-3 font-medium text-slate-700 transition-colors hover:text-[#9cc72b]"
+                    >
+                      {label}
+                    </a>
+                  ) : label === "Home" && isPortfolioPage ? (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onGoHome?.();
+                      }}
+                      className="block w-full text-left border-b border-slate-200 py-3 font-medium text-slate-700 transition-colors hover:text-[#9cc72b]"
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <a
+                      href={href}
+                      onClick={() => setMenuOpen(false)}
+                      className="block border-b border-slate-200 py-3 font-medium text-slate-700 transition-colors hover:text-[#9cc72b]"
+                    >
+                      {label}
+                    </a>
+                  )}
 
                   {children && (
                     <div className="pl-4 pb-2">
@@ -151,7 +235,7 @@ export default function NavBar() {
                           key={sub.label}
                           href={sub.href}
                           onClick={() => setMenuOpen(false)}
-                          className="block py-2 text-sm text-gray-600 hover:text-[#9cc72b] transition-colors"
+                          className="block py-2 text-sm text-slate-600 transition-colors hover:text-[#9cc72b]"
                         >
                           {sub.label}
                         </a>

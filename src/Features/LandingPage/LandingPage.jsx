@@ -100,7 +100,7 @@ function CityGrid({ mouse }) {
 function Scene({ mouse }) {
   return (
     <>
-      <fog attach="fog" args={["#ffffff", 14, 32]} />
+      <fog attach="fog" args={["#050a05", 14, 32]} />
       <ambientLight intensity={0.2} />
       <pointLight
         position={[0, 6, 0]}
@@ -150,27 +150,34 @@ function DotNav({ active, onDotClick }) {
           {/* Label */}
           <span
             className="text-[10px] font-semibold tracking-[0.18em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none select-none"
-            style={{ color: i === active ? BRAND : "rgba(0,0,0,0.45)" }}
+            style={{ color: i === active ? BRAND : "rgba(255,255,255,0.4)" }}
           >
             {label}
           </span>
           {/* Dot / bar */}
-          <motion.div
-            style={{ y: heroCanvasY, opacity: heroCanvasOp }}
-            className="absolute inset-0 z-0 overflow-hidden"
-          >
-            <div className="absolute inset-0 w-full h-full">
-              <iframe
-                src={`https://www.youtube.com/embed/M-xgQDjnnKw?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=M-xgQDjnnKw&playsinline=1`}
-                title="Hero video"
-                allow="autoplay; encrypted-media"
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                frameBorder="0"
-                allowFullScreen
-              />
-              <div className="absolute inset-0" style={{ background: "rgba(255,255,255,0.25)" }} />
-            </div>
-          </motion.div>
+          <button
+            onClick={() => onDotClick(i)}
+            aria-label={`Go to ${label}`}
+            className="rounded-full transition-all duration-300 shrink-0"
+            style={{
+              width: i === active ? 22 : 6,
+              height: 6,
+              background: i === active ? BRAND : "rgba(255,255,255,0.22)",
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   UI ─ ANIMATED COUNTER
+───────────────────────────────────────────────────────────── */
+function Counter({
+  to,
+  prefix = "",
+  suffix = "",
   duration = 1.6,
   grouping = true,
 }) {
@@ -335,13 +342,13 @@ const staggerItem = {
 
 const T = { duration: 0.75, ease: [0.22, 1, 0.36, 1] };
 const CARD_HOVER = {
-  y: -7,
+  y: -8,
   transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] },
 };
 const CARD_TAP = { scale: 0.995 };
 const FOOTER_STAGGER = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.12 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
 };
 const FOOTER_ITEM = {
   hidden: { opacity: 0, y: 18 },
@@ -355,7 +362,7 @@ const FOOTER_ITEM = {
 /* ═══════════════════════════════════════════════════════════════
    LANDING PAGE
 ═══════════════════════════════════════════════════════════════ */
-export default function LandingPage() {
+export default function LandingPage({ onOpenPortfolio }) {
   /* ── Section refs for dot nav ── */
   const heroRef = useRef(null);
   const overviewRef = useRef(null);
@@ -393,22 +400,6 @@ export default function LandingPage() {
     sectionRefs[i].current?.scrollIntoView({ behavior: "smooth" });
   }, []); // eslint-disable-line
 
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      // Slow motion feel; frame rate is source-dependent and cannot force 120fps in HTML video.
-      videoRef.current.playbackRate = 0.7;
-    }
-  }, []);
-
-  /* ── Mouse for 3D ── */
-  const mouse = useRef({ x: 0, y: 0 });
-  const onMouseMove = useCallback((e) => {
-    mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouse.current.y = -(e.clientY / window.innerHeight - 0.5) * 2;
-  }, []);
-
   /* ── Scroll-driven parallax ── */
   const { scrollY } = useScroll();
 
@@ -433,77 +424,46 @@ export default function LandingPage() {
         ref={heroRef}
         id="home"
         className="relative h-screen overflow-hidden snap-start"
-        onMouseMove={onMouseMove}
       >
-        {/* Background gradient */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 70% 50%, #f5f3ff 0%, #ffffff 65%)",
-          }}
-        />
-
-        {/* Grain */}
-        <div
-          aria-hidden
-          className="absolute inset-0 z-10 pointer-events-none"
-          style={{
-            opacity: 0.03,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")`,
-            backgroundSize: "180px 180px",
-          }}
-        />
-
-        {/* Video background — replace 3D scene */}
+        {/* Video background */}
         <motion.div
           style={{ y: heroCanvasY, opacity: heroCanvasOp }}
           className="absolute inset-0 z-0 overflow-hidden"
         >
-          <video
-            ref={videoRef}
-            playsInline
-            autoPlay
-            muted
-            loop
-            poster=""
-            preload="metadata"
-            className="absolute inset-0 h-full w-full object-cover"
-            crossOrigin="anonymous"
-          >
-            <source
-              src="https://cloud.greensglobal.com/dl/d73J79F6cYHC"
-              type="video/mp4"
-            />
-            Your browser does not support the video tag.
-          </video>
+          <iframe
+            title="Hero video"
+            src="https://www.youtube.com/embed/M-xgQDjnnKw?autoplay=1&mute=1&loop=1&controls=0&rel=0&modestbranding=1&playsinline=1&vq=hd1080&playlist=M-xgQDjnnKw"
+            frameBorder="0"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            className="absolute left-1/2 top-1/2"
+            style={{
+              width: "116vw",
+              height: "116vh",
+              minWidth: "177.77vh",
+              minHeight: "56.25vw",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+              filter: "brightness(0.54) contrast(1.02) saturate(0.9)",
+            }}
+          />
           <div
+            aria-hidden
             className="absolute inset-0"
-            style={{ background: "rgba(255, 255, 255, 0.25)" }}
+            style={{
+              background:
+                "linear-gradient(to right, rgba(6,12,24,0.72) 0%, rgba(6,12,24,0.56) 34%, rgba(6,12,24,0.3) 54%, rgba(6,12,24,0.5) 100%)",
+            }}
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(2,6,14,0.52) 0%, rgba(2,6,14,0.24) 24%, rgba(2,6,14,0.56) 100%)",
+            }}
           />
         </motion.div>
-
-        {/* Left vignette */}
-        <div
-          aria-hidden
-          className="absolute inset-y-0 left-0 z-10 pointer-events-none"
-          style={{
-            width: "65%",
-            background:
-              "linear-gradient(to right,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0.7) 52%,transparent 100%)",
-          }}
-        />
-
-        {/* Vertical accent line */}
-        <motion.div
-          initial={{ scaleY: 0, opacity: 0 }}
-          animate={{ scaleY: 1, opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute left-9 top-[22%] bottom-[22%] w-px z-20 pointer-events-none origin-top"
-          style={{
-            background: `linear-gradient(to bottom,transparent,${BRAND}55,transparent)`,
-          }}
-        />
 
         {/* Hero text — parallax faster than canvas */}
         <motion.div
@@ -520,15 +480,14 @@ export default function LandingPage() {
                   transition: { staggerChildren: 0.13, delayChildren: 0.2 },
                 },
               }}
-              className="max-w-[580px]"
+              className="max-w-[640px]"
             >
-              {/* Eyebrow */}
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 24 },
                   show: { opacity: 1, y: 0, transition: T },
                 }}
-                className="flex items-center gap-3 mb-9"
+                className="flex items-center gap-3 mb-7"
               >
                 <span
                   className="w-7 h-px shrink-0"
@@ -536,13 +495,12 @@ export default function LandingPage() {
                 />
                 <span
                   className="text-[11px] font-bold tracking-[0.28em] uppercase"
-                  style={{ color: BRAND }}
+                  style={{ color: "rgba(255,255,255,0.82)" }}
                 >
                   Real Estate · Storage · Infrastructure
                 </span>
               </motion.div>
 
-              {/* Headline */}
               <motion.h1
                 variants={{
                   hidden: { opacity: 0, y: 32 },
@@ -552,7 +510,7 @@ export default function LandingPage() {
                     transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
                   },
                 }}
-                className="font-bold leading-[1.04] tracking-tight mb-7 text-gray-900"
+                className="font-bold leading-[0.98] tracking-tight mb-6 text-white"
                 style={{ fontSize: "clamp(2.8rem, 6.5vw, 5.4rem)" }}
               >
                 Investing in the
@@ -560,21 +518,19 @@ export default function LandingPage() {
                 <span style={{ color: BRAND }}>Spaces</span> That Matter.
               </motion.h1>
 
-              {/* Sub-copy */}
               <motion.p
                 variants={{
                   hidden: { opacity: 0, y: 24 },
                   show: { opacity: 1, y: 0, transition: T },
                 }}
-                className="text-lg md:text-xl leading-relaxed max-w-sm mb-12"
-                style={{ color: "rgba(0,0,0,0.6)" }}
+                className="text-lg md:text-xl leading-relaxed max-w-[32rem] mb-10"
+                style={{ color: "rgba(255,255,255,0.8)" }}
               >
                 Since 1958, Greens Global has developed world-class real estate
                 assets — from Class-A storage facilities to life sciences
                 campuses across three continents.
               </motion.p>
 
-              {/* CTAs */}
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 24 },
@@ -583,38 +539,32 @@ export default function LandingPage() {
                 className="flex flex-wrap gap-4"
               >
                 <button
-                  onClick={() => scrollToSection(2)}
-                  className="inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-wide rounded-sm transition-opacity hover:opacity-80"
+                  onClick={onOpenPortfolio}
+                  className="inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-wide rounded-md transition-opacity hover:opacity-85"
                   style={{ background: BRAND, color: "#ffffff" }}
                 >
                   View Portfolio
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{
-                      duration: 1.8,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    →
-                  </motion.span>
+                  <span>→</span>
                 </button>
                 <button
                   onClick={() => scrollToSection(4)}
-                  className="inline-flex items-center px-8 py-4 text-sm font-medium tracking-wide rounded-sm transition-all duration-200 text-gray-700 hover:text-gray-900"
-                  style={{ border: `1px solid ${BRAND}35` }}
+                  className="inline-flex items-center px-8 py-4 text-sm font-semibold tracking-wide rounded-md transition-all duration-200 text-white hover:text-white"
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.45)",
+                    background: "rgba(255,255,255,0.06)",
+                  }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.borderColor = BRAND)
                   }
                   onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = `${BRAND}35`)
+                    (e.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.45)")
                   }
                 >
                   Our Story
                 </button>
               </motion.div>
 
-              {/* Trust strip */}
               <motion.div
                 variants={{
                   hidden: { opacity: 0 },
@@ -623,8 +573,8 @@ export default function LandingPage() {
                     transition: { delay: 0.6, duration: 0.6 },
                   },
                 }}
-                className="flex flex-wrap items-center gap-6 mt-10 pt-8"
-                style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}
+                className="flex flex-wrap items-center gap-6 mt-8 pt-6"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}
               >
                 {["Greens Storage", "CubeSmart Partner", "Genopolis"].map(
                   (n) => (
@@ -635,7 +585,7 @@ export default function LandingPage() {
                       />
                       <span
                         className="text-xs font-medium"
-                        style={{ color: "rgba(0,0,0,0.35)" }}
+                        style={{ color: "rgba(255,255,255,0.62)" }}
                       >
                         {n}
                       </span>
@@ -657,7 +607,7 @@ export default function LandingPage() {
         >
           <span
             className="text-[10px] tracking-[0.28em] uppercase"
-            style={{ color: "rgba(0,0,0,0.3)" }}
+            style={{ color: "rgba(255,255,255,0.55)" }}
           >
             Scroll
           </span>
@@ -724,9 +674,11 @@ export default function LandingPage() {
               <motion.div
                 key={s.label}
                 {...staggerItem}
+                whileHover={CARD_HOVER}
+                whileTap={CARD_TAP}
                 className="rounded-sm p-8 text-center"
                 style={{
-                  background: "rgba(255,255,255,0.025)",
+                  background: "#ffffff",
                   border: "1px solid rgba(0,0,0,0.15)",
                 }}
               >
@@ -759,7 +711,7 @@ export default function LandingPage() {
           <motion.p
             {...inViewFadeUp}
             transition={{ ...T, delay: 0.4 }}
-            className="text-center mt-14 text-sm tracking-[0.15em] uppercase font-semibold"
+            className="text-center mt-14 text-sm tracking-[0.18em] uppercase"
             style={{ color: "rgba(0,0,0,0.78)" }}
           >
             Established 1958 · Global Real Estate Investment & Development
@@ -788,7 +740,7 @@ export default function LandingPage() {
                 Featured Properties
               </h2>
               <button
-                onClick={() => {}}
+                onClick={onOpenPortfolio}
                 className="text-sm font-semibold transition-colors duration-200 hover:opacity-80 flex items-center gap-2"
                 style={{ color: BRAND }}
               >
@@ -910,7 +862,7 @@ export default function LandingPage() {
                 whileTap={CARD_TAP}
                 className="p-7 rounded-sm flex flex-col gap-5"
                 style={{
-                  background: "rgba(255,255,255,0.022)",
+                  background: "#ffffff",
                   border: "1px solid rgba(0,0,0,0.15)",
                 }}
                 onMouseEnter={(e) =>
@@ -1166,7 +1118,7 @@ export default function LandingPage() {
             <motion.div
               {...inViewFadeUp}
               transition={{ ...T, delay: 0.45 }}
-              className="mt-10 mx-auto relative overflow-hidden rounded-sm px-5 py-3 border"
+              className="mt-10 mx-auto relative overflow-hidden rounded-sm border px-5 py-3"
               style={{
                 borderColor: "rgba(156,199,43,0.35)",
                 background: "#ffffff",
