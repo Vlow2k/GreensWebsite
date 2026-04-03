@@ -50,6 +50,15 @@ const STATUS_STYLE = {
 const STAGE_OPTIONS = ["All", "Current", "Realized"];
 const SECTOR_OPTIONS = ["All", "Industrial", "Commercial", "Other"];
 
+const FOOTER_STAGGER = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+const FOOTER_ITEM = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+};
+
 /* ─────────────────────────────────────────────────────────────
    DATA
 ───────────────────────────────────────────────────────────── */
@@ -563,6 +572,34 @@ function SelectedOverlay({ property, onClose }) {
         boxShadow: "0 20px 48px rgba(15,23,42,0.14)",
       }}
     >
+      <div
+        className="h-28 w-full flex flex-col items-center justify-center gap-2"
+        style={{
+          background: "linear-gradient(135deg, #eef5e7 0%, #ddecd3 100%)",
+          borderBottom: "1px solid rgba(15,23,42,0.07)",
+        }}
+      >
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="rgba(156,199,43,0.65)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="7" width="18" height="14" rx="1" />
+          <path d="M8 21V11h8v10M3 7l9-4 9 4" />
+          <rect x="10" y="14" width="4" height="4" />
+        </svg>
+        <span
+          className="text-[9px] font-bold uppercase tracking-[0.2em]"
+          style={{ color: "rgba(156,199,43,0.72)" }}
+        >
+          Property Image
+        </span>
+      </div>
       <div className="px-4 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-1.5">
@@ -714,10 +751,16 @@ function PropertyListCard({ property, onClick }) {
   );
 }
 
-function PropertyDetailModal({ property, onClose, onViewMap }) {
+function PropertyDetailModal({
+  property,
+  onClose,
+  onViewMap,
+  onViewInteractive,
+}) {
   if (!property) return null;
   const sec = SECTOR_STYLE[property.sector] ?? SECTOR_STYLE.Other;
   const sts = STATUS_STYLE[property.status] ?? STATUS_STYLE.Active;
+  const googleMapUrl = `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lon}`;
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -822,17 +865,31 @@ function PropertyDetailModal({ property, onClose, onViewMap }) {
               </div>
             ))}
           </div>
-          <button
-            onClick={onViewMap}
-            className="mt-4 w-full rounded-2xl py-3 text-[13px] font-bold tracking-wide transition-all duration-200"
-            style={{
-              background: BRAND,
-              color: "#fff",
-              boxShadow: "0 4px 16px rgba(156,199,43,0.35)",
-            }}
-          >
-            View on Interactive Map →
-          </button>
+          <div className="mt-4 grid grid-cols-1 gap-2">
+            <a
+              href={googleMapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full rounded-2xl py-3 text-center text-[13px] font-bold tracking-wide transition-all duration-200"
+              style={{
+                background: "rgba(15,23,42,0.08)",
+                color: "#0f172a",
+              }}
+            >
+              Open in Google Maps
+            </a>
+            <button
+              onClick={onViewInteractive ?? onViewMap}
+              className="w-full rounded-2xl py-3 text-[13px] font-bold tracking-wide transition-all duration-200"
+              style={{
+                background: BRAND,
+                color: "#fff",
+                boxShadow: "0 4px 16px rgba(156,199,43,0.35)",
+              }}
+            >
+              View on Interactive Map →
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -872,27 +929,82 @@ function EarthFallback() {
 /** Single property pin on the globe */
 function GlobePin({ property, selected, hovered, onSelect, onHover, onLeave }) {
   const meshRef = useRef();
+  const ringRef = useRef();
+  const beamRef = useRef();
+  const groupRef = useRef();
+  const { camera } = useThree();
+  const worldPos = useRef(new THREE.Vector3());
+  const frontNormal = useRef(new THREE.Vector3());
   const pos = useMemo(
-    () => latLonToVec3(property.lat, property.lon, 1.015),
-    [property.lat, property.lon]
+    () =>
+      latLonToVec3(
+        property.displayLat ?? property.lat,
+        property.displayLon ?? property.lon,
+        1.015
+      ),
+    [property.displayLat, property.displayLon, property.lat, property.lon]
   );
-  const color = hovered || selected ? "#b9ef3d" : BRAND;
+  const color = hovered || selected ? "#c9ff52" : BRAND;
 
   useFrame(({ clock }) => {
-    if (!meshRef.current) return;
-    if (selected) {
-      const pulse = 1 + Math.sin(clock.elapsedTime * 4.5) * 0.18;
-      meshRef.current.scale.setScalar(pulse);
-    } else if (hovered) {
-      const pulse = 1 + Math.sin(clock.elapsedTime * 5.2) * 0.1;
-      meshRef.current.scale.setScalar(pulse * 1.12);
-    } else {
-      meshRef.current.scale.setScalar(1);
+    if (!meshRef.current || !groupRef.current) return;
+
+    groupRef.current.getWorldPosition(worldPos.current);
+    frontNormal.current.copy(worldPos.current).normalize();
+    const cameraDir = camera.position.clone().normalize();
+    const facing = Math.max(0, frontNormal.current.dot(cameraDir));
+    const lodOpacity = 0.16 + facing * 0.9;
+
+    const breathing =
+      1 + Math.sin(clock.elapsedTime * 2.8 + property.id) * 0.07;
+    const hoverBoost = hovered ? 1.22 : 1;
+    const selectBoost = selected ? 1.35 : 1;
+    meshRef.current.scale.setScalar(breathing * hoverBoost * selectBoost);
+
+    if (ringRef.current) {
+      const ringPulse =
+        1 + Math.sin(clock.elapsedTime * 3.5 + property.id) * 0.18;
+      ringRef.current.scale.setScalar(
+        (selected ? 1.7 : hovered ? 1.3 : 1.08) * ringPulse
+      );
+      ringRef.current.material.opacity =
+        (selected ? 0.5 : hovered ? 0.38 : 0.22) * lodOpacity;
     }
+
+    if (beamRef.current) {
+      beamRef.current.material.opacity =
+        (selected ? 0.22 : hovered ? 0.14 : 0.08) * lodOpacity;
+      beamRef.current.scale.y = selected ? 1.18 : hovered ? 1.04 : 0.9;
+    }
+
+    meshRef.current.material.opacity =
+      (selected ? 1 : hovered ? 0.95 : 0.86) * lodOpacity;
+    meshRef.current.material.emissiveIntensity = selected
+      ? 1.6
+      : hovered
+        ? 1.15
+        : 0.72;
   });
 
   return (
-    <group position={pos}>
+    <group ref={groupRef} position={pos}>
+      <mesh
+        ref={beamRef}
+        position={[0, 0.04, 0]}
+        quaternion={new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          pos.clone().normalize()
+        )}
+      >
+        <cylinderGeometry args={[0.003, 0.009, 0.22, 10, 1, true]} />
+        <meshBasicMaterial
+          color={BRAND}
+          transparent
+          opacity={0.1}
+          depthWrite={false}
+        />
+      </mesh>
+
       <mesh
         ref={meshRef}
         onClick={(e) => {
@@ -908,53 +1020,73 @@ function GlobePin({ property, selected, hovered, onSelect, onHover, onLeave }) {
           onLeave();
           document.body.style.cursor = "default";
         }}
-        rotation={[0.78, 0, 0.42]}
       >
-        <octahedronGeometry
-          args={[selected ? 0.028 : hovered ? 0.022 : 0.017, 0]}
+        <sphereGeometry
+          args={[selected ? 0.016 : hovered ? 0.013 : 0.011, 14, 14]}
         />
         <meshStandardMaterial
+          transparent
           color={color}
           emissive={color}
-          emissiveIntensity={selected ? 1.65 : hovered ? 1.2 : 0.62}
+          emissiveIntensity={selected ? 1.6 : hovered ? 1.15 : 0.72}
         />
       </mesh>
-      {/* Outer glow ring for selected */}
-      {selected && (
-        <mesh>
-          <sphereGeometry args={[0.04, 10, 10]} />
-          <meshStandardMaterial color={BRAND} transparent opacity={0.18} />
-        </mesh>
-      )}
+
+      <mesh ref={ringRef}>
+        <ringGeometry args={[0.017, 0.024, 24]} />
+        <meshBasicMaterial
+          color={BRAND}
+          transparent
+          opacity={0.26}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+
       {/* Hover tooltip */}
       {hovered && (
         <Html
-          position={[0.11, 0.055, 0]}
-          distanceFactor={8}
+          position={[0.085, 0.05, 0]}
+          transform={false}
           style={{ pointerEvents: "none" }}
         >
           <div
             style={{
-              background: "rgba(9,17,8,0.9)",
-              color: "#fff",
-              padding: "6px 10px",
-              borderRadius: "14px",
-              whiteSpace: "nowrap",
-              border: `1px solid rgba(156,199,43,0.35)`,
-              letterSpacing: "0.02em",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+              position: "relative",
+              background:
+                "linear-gradient(160deg, rgba(16, 25, 42, 0.74), rgba(19, 36, 56, 0.6))",
+              backdropFilter: "blur(12px)",
+              color: "#e8f0ff",
+              padding: "6px 9px",
+              borderRadius: "10px",
+              maxWidth: "156px",
+              whiteSpace: "normal",
+              border: "1px solid rgba(148, 163, 184, 0.22)",
+              boxShadow: "0 10px 26px rgba(2, 6, 23, 0.42)",
+              lineHeight: 1.2,
             }}
           >
-            <div style={{ fontSize: "10px", fontWeight: 700, lineHeight: 1.1 }}>
+            <div
+              style={{
+                position: "absolute",
+                left: "12px",
+                bottom: "-9px",
+                width: "1px",
+                height: "9px",
+                background: "rgba(148,163,184,0.46)",
+              }}
+            />
+            <div style={{ fontSize: "9px", fontWeight: 700, lineHeight: 1.15 }}>
               {property.name}
             </div>
             <div
               style={{
-                fontSize: "9px",
+                fontSize: "7px",
                 fontWeight: 500,
                 lineHeight: 1.2,
-                opacity: 0.82,
+                opacity: 0.76,
                 marginTop: "3px",
+                letterSpacing: "0.01em",
               }}
             >
               {property.location}
@@ -975,25 +1107,29 @@ function GlobeAnimator({ globeRef, selectedProperty, hoveredId, onReady }) {
   const targetQ = useRef(new THREE.Quaternion());
   const phase = useRef("idle");
   const lastId = useRef(null);
+  const homeCameraPos = useMemo(() => new THREE.Vector3(0, 0, 2.5), []);
+  const zoomCameraPos = useMemo(() => new THREE.Vector3(0, 0, 1.04), []);
 
   useEffect(() => {
     if (!selectedProperty) {
       phase.current = "idle";
       lastId.current = null;
-      camera.position.set(0, 0, 2.5);
+      camera.position.copy(homeCameraPos);
+      camera.lookAt(0, 0, 0);
       return;
     }
     if (selectedProperty.id === lastId.current) return;
     lastId.current = selectedProperty.id;
     // Compute absolute quaternion that rotates globe so this lat/lon faces camera (+Z)
     const dir = latLonToVec3(
-      selectedProperty.lat,
-      selectedProperty.lon,
+      selectedProperty.displayLat ?? selectedProperty.lat,
+      selectedProperty.displayLon ?? selectedProperty.lon,
       1
     ).normalize();
     targetQ.current.setFromUnitVectors(dir, new THREE.Vector3(0, 0, 1));
-    phase.current = "rotating";
-  }, [selectedProperty, camera]);
+    // Always normalize camera orientation before rotating so selected pin centers reliably.
+    phase.current = "recentering";
+  }, [selectedProperty, camera, homeCameraPos]);
 
   useFrame(() => {
     const globe = globeRef.current;
@@ -1006,10 +1142,20 @@ function GlobeAnimator({ globeRef, selectedProperty, hoveredId, onReady }) {
       return;
     }
 
+    if (phase.current === "recentering") {
+      camera.position.lerp(homeCameraPos, 0.14);
+      camera.lookAt(0, 0, 0);
+      if (camera.position.distanceTo(homeCameraPos) < 0.004) {
+        camera.position.copy(homeCameraPos);
+        phase.current = "rotating";
+      }
+      return;
+    }
+
     if (phase.current === "rotating") {
       const diff = globe.quaternion.angleTo(targetQ.current);
       if (diff > 0.005) {
-        globe.quaternion.slerp(targetQ.current, 0.07);
+        globe.quaternion.slerp(targetQ.current, 0.06);
       } else {
         globe.quaternion.copy(targetQ.current);
         phase.current = "zooming";
@@ -1018,11 +1164,12 @@ function GlobeAnimator({ globeRef, selectedProperty, hoveredId, onReady }) {
     }
 
     if (phase.current === "zooming") {
-      const z = camera.position.z;
-      if (z > 1.08) {
-        camera.position.z = THREE.MathUtils.lerp(z, 1.04, 0.065);
+      camera.position.lerp(zoomCameraPos, 0.08);
+      camera.lookAt(0, 0, 0);
+      if (camera.position.distanceTo(zoomCameraPos) > 0.003) {
+        return;
       } else {
-        camera.position.z = 1.04;
+        camera.position.copy(zoomCameraPos);
         phase.current = "done";
         onReady();
       }
@@ -1059,11 +1206,11 @@ function GlobeScene({
       <Stars
         radius={120}
         depth={50}
-        count={4000}
-        factor={5}
-        saturation={0.3}
+        count={1800}
+        factor={2.1}
+        saturation={0}
         fade
-        speed={0.2}
+        speed={0.12}
       />
 
       <group ref={globeRef}>
@@ -1121,10 +1268,17 @@ function FlyToSelected({ property }) {
   const map = useMap();
   useEffect(() => {
     if (!property) return;
-    map.flyTo([property.lat, property.lon], 15, {
-      duration: 1.4,
-      easeLinearity: 0.2,
-    });
+    map.flyTo(
+      [
+        property.displayLat ?? property.lat,
+        property.displayLon ?? property.lon,
+      ],
+      15,
+      {
+        duration: 1.4,
+        easeLinearity: 0.2,
+      }
+    );
   }, [map, property?.id]);
   return null;
 }
@@ -1133,11 +1287,13 @@ function FlyToSelected({ property }) {
    MAIN PAGE
 ───────────────────────────────────────────────────────────── */
 export default function PortfolioPage() {
+  const [viewMode, setViewMode] = useState("interactive");
   // "globe" = 3D globe visible | "map" = Leaflet map visible
   const [phase, setPhase] = useState("globe");
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [orbitEnabled, setOrbitEnabled] = useState(true);
+  const [modalPropertyId, setModalPropertyId] = useState(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -1205,7 +1361,16 @@ export default function PortfolioPage() {
       setSelectedId(null);
   }, [filtered, selectedId]);
 
-  const selectedProperty = PROPERTIES.find((p) => p.id === selectedId) ?? null;
+  const selectedProperty =
+    filtered.find((p) => p.id === selectedId) ??
+    PROPERTIES.find((p) => p.id === selectedId) ??
+    null;
+  const selectedDisplayProperty =
+    displayProperties.find((p) => p.id === selectedId) ?? selectedProperty;
+  const modalProperty =
+    filtered.find((p) => p.id === modalPropertyId) ??
+    PROPERTIES.find((p) => p.id === modalPropertyId) ??
+    null;
   const hasFilters =
     search.trim() || stage !== "All" || sector !== "All" || country !== "All";
 
@@ -1245,14 +1410,44 @@ export default function PortfolioPage() {
 
   const handleCardClick = useCallback(
     (id) => {
+      if (viewMode === "list") {
+        setModalPropertyId(id);
+        return;
+      }
       if (phase === "map") {
         handleMapSelect(id);
       } else {
         handleGlobeSelect(id);
       }
     },
-    [phase, handleGlobeSelect, handleMapSelect]
+    [phase, viewMode, handleGlobeSelect, handleMapSelect]
   );
+
+  const handleViewModeChange = useCallback((mode) => {
+    setViewMode(mode);
+    setHoveredId(null);
+    if (mode === "list") {
+      setPhase("globe");
+      setSelectedId(null);
+      setOrbitEnabled(true);
+      return;
+    }
+    setModalPropertyId(null);
+  }, []);
+
+  const openPropertyInInteractiveMap = useCallback((id) => {
+    setModalPropertyId(null);
+    setViewMode("interactive");
+    setSelectedId(id);
+    setPhase("map");
+    setOrbitEnabled(false);
+    requestAnimationFrame(() => {
+      cardRefs.current[id]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+  }, []);
 
   return (
     <motion.div
@@ -1260,8 +1455,8 @@ export default function PortfolioPage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col"
-      style={{ height: "100vh", background: "#f1f5ee", paddingTop: "4rem" }}
+      className="flex h-screen flex-col overflow-hidden"
+      style={{ background: "#f1f5ee", paddingTop: "4rem" }}
     >
       {/* ── DARK HERO ────────────────────────────────────── */}
       <header
@@ -1342,388 +1537,519 @@ export default function PortfolioPage() {
               ))}
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* ── MAIN SPLIT ───────────────────────────────────── */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 p-3">
-        {/* LEFT: Globe canvas + Map (layered, crossfade) */}
-        <div
-          className="relative lg:flex-1 rounded-3xl overflow-hidden"
-          style={{ minHeight: 300 }}
-        >
-          {/* ── 3D GLOBE ── */}
-          <motion.div
-            className="absolute inset-0"
-            animate={{ opacity: phase === "map" ? 0 : 1 }}
-            transition={{ duration: 0.55, ease: "easeInOut" }}
-            style={{ pointerEvents: phase === "map" ? "none" : "auto" }}
-          >
-            <Canvas
-              camera={{ position: [0, 0, 2.5], fov: 45 }}
-              dpr={[1, 1.8]}
-              style={{ background: "#04090f" }}
-            >
-              <GlobeScene
-                properties={filtered}
-                selectedProperty={phase === "map" ? null : selectedProperty}
-                selectedId={selectedId}
-                hoveredId={hoveredId}
-                onSelect={handleGlobeSelect}
-                onHover={setHoveredId}
-                onLeave={() => setHoveredId(null)}
-                onReady={handleTransitionReady}
-                orbitEnabled={orbitEnabled}
-              />
-            </Canvas>
-            {/* Globe hint */}
-            {!selectedId && (
-              <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-                <div
-                  className="rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em]"
-                  style={{
-                    background: "rgba(0,0,0,0.5)",
-                    color: "rgba(255,255,255,0.45)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  Drag to rotate · Click pin to explore
-                </div>
-              </div>
-            )}
-          </motion.div>
-
-          {/* ── LEAFLET MAP ── */}
-          <motion.div
-            className="absolute inset-0"
-            animate={{ opacity: phase === "map" ? 1 : 0 }}
-            transition={{ duration: 0.55, ease: "easeInOut" }}
-            style={{ pointerEvents: phase === "map" ? "auto" : "none" }}
-          >
-            {/* Mount map eagerly so it's ready when transition fires */}
-            {selectedProperty && (
-              <MapContainer
-                center={[selectedProperty.lat, selectedProperty.lon]}
-                zoom={15}
-                minZoom={2}
-                maxZoom={19}
-                scrollWheelZoom
-                touchZoom
-                dragging
-                doubleClickZoom
-                zoomControl
-                style={{ height: "100%", width: "100%" }}
-              >
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  subdomains="abcd"
-                />
-                <FlyToSelected property={selectedProperty} />
-                {displayProperties.map((p) => {
-                  const selected = p.id === selectedId;
-                  const hovered = p.id === hoveredId;
-                  const sec = SECTOR_STYLE[p.sector] ?? SECTOR_STYLE.Other;
-                  return (
-                    <CircleMarker
-                      key={p.id}
-                      center={[p.displayLat, p.displayLon]}
-                      radius={selected ? 10 : hovered ? 8 : 6}
-                      pathOptions={{
-                        color: selected ? "#0f172a" : sec.marker,
-                        fillColor: selected ? "#0f172a" : sec.marker,
-                        fillOpacity: selected ? 0.95 : 0.75,
-                        weight: selected ? 2.5 : 1.5,
-                      }}
-                      eventHandlers={{
-                        click: () => handleMapSelect(p.id),
-                        mouseover: () => setHoveredId(p.id),
-                        mouseout: () => setHoveredId(null),
-                      }}
-                    />
-                  );
-                })}
-              </MapContainer>
-            )}
-
-            {/* Back-to-globe button */}
-            <button
-              onClick={handleBackToGlobe}
-              className="absolute top-4 left-4 z-[500] flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-200"
-              style={{
-                background: "rgba(255,255,255,0.95)",
-                color: BRAND,
-                border: "1px solid rgba(156,199,43,0.3)",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 4px 16px rgba(15,23,42,0.12)",
-              }}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z" />
-                <path d="M10 6c-2.2.8-3.8 2-4.5 4M6 14c1 .8 2.5 1.3 4 1.3M14 8c.5 1 .8 2.1.8 3.2" />
-              </svg>
-              Back to Globe
-            </button>
-
-            {/* Selected property overlay */}
-            <div className="absolute bottom-4 left-4 z-[500] w-[min(90%,320px)]">
-              <AnimatePresence mode="wait">
-                {selectedProperty && phase === "map" && (
-                  <SelectedOverlay
-                    key={selectedProperty.id}
-                    property={selectedProperty}
-                    onClose={() => setSelectedId(null)}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Map legend */}
-            <div
-              className="pointer-events-none absolute bottom-4 right-4 z-[500] hidden lg:flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
-              style={{
-                background: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(15,23,42,0.08)",
-              }}
-            >
-              {Object.entries(SECTOR_STYLE).map(([name, s]) => (
-                <div key={name} className="flex items-center gap-2">
-                  <div
-                    className="h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ background: s.marker }}
-                  />
-                  <span
-                    className="text-[10px] font-semibold"
-                    style={{ color: "rgba(15,23,42,0.6)" }}
-                  >
-                    {name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Phase label tag */}
           <div
-            className="pointer-events-none absolute right-3 top-3 z-[600] rounded-xl px-3 py-1.5"
+            className="mt-3 rounded-2xl px-3 py-2"
             style={{
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(156,199,43,0.2)",
-              boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+              background: "rgba(255,255,255,0.86)",
+              border: "1px solid rgba(15,23,42,0.09)",
+              boxShadow: "0 4px 16px rgba(15,23,42,0.05)",
             }}
           >
-            <span
-              className="text-[9px] font-bold uppercase tracking-[0.2em]"
-              style={{ color: BRAND }}
-            >
-              {phase === "globe" ? "3D Globe" : "Asset Map"}
-            </span>
-          </div>
-        </div>
+            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
+              <div className="relative min-w-[220px] flex-1">
+                <svg
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="rgba(15,23,42,0.35)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="9" cy="9" r="6" />
+                  <path d="m17 17-3.5-3.5" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) =>
+                    startTransition(() => setSearch(e.target.value))
+                  }
+                  placeholder="Search properties..."
+                  className="w-full rounded-[12px] py-2 pl-9 pr-3 text-[12px] outline-none"
+                  style={{
+                    background: "rgba(15,23,42,0.04)",
+                    border: "1px solid rgba(15,23,42,0.09)",
+                    color: "#0f172a",
+                  }}
+                />
+              </div>
 
-        {/* RIGHT: Filter + property list */}
-        <div
-          className="flex flex-col lg:w-[420px] xl:w-[460px] rounded-3xl overflow-hidden"
-          style={{
-            background: "#ffffff",
-            border: "1px solid rgba(15,23,42,0.08)",
-            boxShadow: "0 8px 32px rgba(15,23,42,0.07)",
-          }}
-        >
-          {/* Search + filters */}
-          <div
-            className="shrink-0 px-4 pt-4 pb-3 border-b"
-            style={{ borderColor: "rgba(15,23,42,0.07)" }}
-          >
-            {/* Search */}
-            <div className="relative">
-              <svg
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                width="14"
-                height="14"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="rgba(15,23,42,0.35)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="9" cy="9" r="6" />
-                <path d="m17 17-3.5-3.5" />
-              </svg>
-              <input
-                value={search}
-                onChange={(e) =>
-                  startTransition(() => setSearch(e.target.value))
-                }
-                placeholder="Search properties..."
-                className="w-full rounded-[14px] py-2.5 pl-9 pr-4 text-[13px] outline-none"
+              <select
+                value={stage}
+                onChange={(e) => setStage(e.target.value)}
+                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
                 style={{
-                  background: "rgba(15,23,42,0.04)",
-                  border: "1px solid rgba(15,23,42,0.09)",
-                  color: "#0f172a",
+                  background: "#fff",
+                  border: "1px solid rgba(15,23,42,0.12)",
+                  color: "rgba(15,23,42,0.7)",
                 }}
-              />
-            </div>
+              >
+                {STAGE_OPTIONS.map((o) => (
+                  <option key={o} value={o}>
+                    Stage: {o}
+                  </option>
+                ))}
+              </select>
 
-            {/* Filter rows */}
-            <div className="mt-3 flex flex-col gap-2.5">
-              {/* Stage */}
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-12 shrink-0 text-[9px] font-bold uppercase tracking-[0.2em]"
-                  style={{ color: "rgba(15,23,42,0.35)" }}
+              <select
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
+                style={{
+                  background: "#fff",
+                  border: "1px solid rgba(15,23,42,0.12)",
+                  color: "rgba(15,23,42,0.7)",
+                }}
+              >
+                {SECTOR_OPTIONS.map((o) => (
+                  <option key={o} value={o}>
+                    Sector: {o}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="rounded-[12px] px-3 py-2 text-[12px] font-semibold outline-none"
+                style={{
+                  background: "#fff",
+                  border: "1px solid rgba(15,23,42,0.12)",
+                  color: "rgba(15,23,42,0.7)",
+                }}
+              >
+                {countries.map((o) => (
+                  <option key={o} value={o}>
+                    Region: {o}
+                  </option>
+                ))}
+              </select>
+
+              {hasFilters && (
+                <button
+                  onClick={() => {
+                    setSearch("");
+                    setStage("All");
+                    setSector("All");
+                    setCountry("All");
+                  }}
+                  className="text-[11px] font-semibold whitespace-nowrap"
+                  style={{ color: "rgba(15,23,42,0.46)" }}
                 >
-                  Stage
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {STAGE_OPTIONS.map((o) => (
-                    <FilterChip
-                      key={o}
-                      active={stage === o}
-                      onClick={() => setStage(o)}
-                    >
-                      {o}
-                    </FilterChip>
-                  ))}
-                </div>
-              </div>
+                  Reset
+                </button>
+              )}
 
-              {/* Sector */}
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-12 shrink-0 text-[9px] font-bold uppercase tracking-[0.2em]"
-                  style={{ color: "rgba(15,23,42,0.35)" }}
-                >
-                  Sector
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {SECTOR_OPTIONS.map((o) => (
-                    <FilterChip
-                      key={o}
-                      active={sector === o}
-                      onClick={() => setSector(o)}
-                    >
-                      {o}
-                    </FilterChip>
-                  ))}
-                </div>
-              </div>
-
-              {/* Country */}
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-12 shrink-0 text-[9px] font-bold uppercase tracking-[0.2em]"
-                  style={{ color: "rgba(15,23,42,0.35)" }}
-                >
-                  Region
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {countries.map((o) => (
-                    <FilterChip
-                      key={o}
-                      active={country === o}
-                      onClick={() => setCountry(o)}
-                    >
-                      {o}
-                    </FilterChip>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Count + reset */}
-            <div className="mt-3 flex items-center justify-between">
               <p
-                className="text-[12px]"
-                style={{ color: "rgba(15,23,42,0.5)" }}
+                className="text-[11px] whitespace-nowrap"
+                style={{ color: "rgba(15,23,42,0.52)" }}
               >
                 <span className="font-bold text-slate-900">
                   {filtered.length}
                 </span>{" "}
                 {filtered.length === 1 ? "property" : "properties"}
               </p>
-              <div className="flex items-center gap-3">
-                {hasFilters && (
-                  <button
-                    onClick={() => {
-                      setSearch("");
-                      setStage("All");
-                      setSector("All");
-                      setCountry("All");
-                    }}
-                    className="text-[10px] font-semibold"
-                    style={{ color: "rgba(15,23,42,0.4)" }}
-                  >
-                    ✕ Reset
-                  </button>
-                )}
-                <p
-                  className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                  style={{ color: "rgba(15,23,42,0.28)" }}
+
+              <div className="lg:ml-auto">
+                <div
+                  className="inline-flex rounded-full p-1"
+                  style={{
+                    background: "rgba(255,255,255,0.9)",
+                    border: "1px solid rgba(15,23,42,0.1)",
+                  }}
                 >
-                  {phase === "globe"
-                    ? "Click to zoom globe"
-                    : "Click to fly map"}
-                </p>
+                  {[
+                    { key: "interactive", label: "Interactive" },
+                    { key: "list", label: "List View" },
+                  ].map((opt) => {
+                    const active = viewMode === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        onClick={() => handleViewModeChange(opt.key)}
+                        className="rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-200"
+                        style={{
+                          background: active ? BRAND : "transparent",
+                          color: active ? "#13210f" : "rgba(15,23,42,0.52)",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Card list */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3">
-            {filtered.length === 0 ? (
-              <div className="flex h-40 items-center justify-center">
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: "rgba(15,23,42,0.38)" }}
+      {/* ── MAIN SPLIT ───────────────────────────────────── */}
+      {viewMode === "interactive" ? (
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 p-3">
+          {/* LEFT: Globe canvas + Map (layered, crossfade) */}
+          <div
+            className="relative lg:flex-1 rounded-3xl overflow-hidden"
+            style={{ minHeight: 300 }}
+          >
+            {/* ── 3D GLOBE ── */}
+            <motion.div
+              className="absolute inset-0"
+              animate={{ opacity: phase === "map" ? 0 : 1 }}
+              transition={{ duration: 0.55, ease: "easeInOut" }}
+              style={{ pointerEvents: phase === "map" ? "none" : "auto" }}
+            >
+              <Canvas
+                camera={{ position: [0, 0, 2.5], fov: 45 }}
+                dpr={[1, 1.8]}
+                style={{ background: "#04090f" }}
+              >
+                <GlobeScene
+                  properties={displayProperties}
+                  selectedProperty={
+                    phase === "map" ? null : selectedDisplayProperty
+                  }
+                  selectedId={selectedId}
+                  hoveredId={hoveredId}
+                  onSelect={handleGlobeSelect}
+                  onHover={setHoveredId}
+                  onLeave={() => setHoveredId(null)}
+                  onReady={handleTransitionReady}
+                  orbitEnabled={orbitEnabled}
+                />
+              </Canvas>
+              {/* Globe hint */}
+              {!selectedId && (
+                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
+                  <div
+                    className="rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{
+                      background: "rgba(0,0,0,0.5)",
+                      color: "rgba(255,255,255,0.45)",
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    Drag to rotate · Click pin to explore
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            {/* ── LEAFLET MAP ── */}
+            <motion.div
+              className="absolute inset-0"
+              animate={{ opacity: phase === "map" ? 1 : 0 }}
+              transition={{ duration: 0.55, ease: "easeInOut" }}
+              style={{ pointerEvents: phase === "map" ? "auto" : "none" }}
+            >
+              {/* Mount map eagerly so it's ready when transition fires */}
+              {selectedProperty && (
+                <MapContainer
+                  center={[
+                    selectedDisplayProperty?.displayLat ?? selectedProperty.lat,
+                    selectedDisplayProperty?.displayLon ?? selectedProperty.lon,
+                  ]}
+                  zoom={15}
+                  minZoom={2}
+                  maxZoom={19}
+                  scrollWheelZoom
+                  touchZoom
+                  dragging
+                  doubleClickZoom
+                  zoomControl
+                  style={{ height: "100%", width: "100%" }}
                 >
-                  No properties match.
-                </p>
-              </div>
-            ) : (
-              <motion.div className="flex flex-col gap-2">
-                <AnimatePresence mode="popLayout">
-                  {filtered.map((p, i) => (
-                    <motion.div
-                      key={p.id}
-                      ref={(el) => {
-                        if (el) cardRefs.current[p.id] = el;
-                      }}
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                      transition={{
-                        duration: 0.2,
-                        delay: i < 12 ? i * 0.025 : 0,
-                      }}
-                    >
-                      <PropertyCard
-                        property={p}
-                        active={p.id === selectedId}
-                        onClick={() => handleCardClick(p.id)}
-                        onHover={() => setHoveredId(p.id)}
-                        onLeave={() => setHoveredId(null)}
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    subdomains="abcd"
+                  />
+                  <FlyToSelected property={selectedDisplayProperty} />
+                  {displayProperties.map((p) => {
+                    const selected = p.id === selectedId;
+                    const hovered = p.id === hoveredId;
+                    const sec = SECTOR_STYLE[p.sector] ?? SECTOR_STYLE.Other;
+                    return (
+                      <CircleMarker
+                        key={p.id}
+                        center={[p.displayLat, p.displayLon]}
+                        radius={selected ? 10 : hovered ? 8 : 6}
+                        pathOptions={{
+                          color: selected ? "#0f172a" : sec.marker,
+                          fillColor: selected ? "#0f172a" : sec.marker,
+                          fillOpacity: selected ? 0.95 : 0.75,
+                          weight: selected ? 2.5 : 1.5,
+                        }}
+                        eventHandlers={{
+                          click: () => handleMapSelect(p.id),
+                          mouseover: () => setHoveredId(p.id),
+                          mouseout: () => setHoveredId(null),
+                        }}
                       />
-                    </motion.div>
-                  ))}
+                    );
+                  })}
+                </MapContainer>
+              )}
+
+              {/* Back-to-globe button */}
+              <button
+                onClick={handleBackToGlobe}
+                className="absolute top-4 left-4 z-[500] flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-200"
+                style={{
+                  background: "rgba(255,255,255,0.95)",
+                  color: BRAND,
+                  border: "1px solid rgba(156,199,43,0.3)",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 4px 16px rgba(15,23,42,0.12)",
+                }}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z" />
+                  <path d="M10 6c-2.2.8-3.8 2-4.5 4M6 14c1 .8 2.5 1.3 4 1.3M14 8c.5 1 .8 2.1.8 3.2" />
+                </svg>
+                Back to Globe
+              </button>
+
+              {/* Selected property overlay */}
+              <div className="absolute bottom-4 left-4 z-[500] w-[min(90%,320px)]">
+                <AnimatePresence mode="wait">
+                  {selectedProperty && phase === "map" && (
+                    <SelectedOverlay
+                      key={selectedProperty.id}
+                      property={selectedProperty}
+                      onClose={() => setSelectedId(null)}
+                    />
+                  )}
                 </AnimatePresence>
-              </motion.div>
-            )}
+              </div>
+
+              {/* Map legend */}
+              <div
+                className="pointer-events-none absolute bottom-4 right-4 z-[500] hidden lg:flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
+                style={{
+                  background: "rgba(255,255,255,0.9)",
+                  backdropFilter: "blur(8px)",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                }}
+              >
+                {Object.entries(SECTOR_STYLE).map(([name, s]) => (
+                  <div key={name} className="flex items-center gap-2">
+                    <div
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ background: s.marker }}
+                    />
+                    <span
+                      className="text-[10px] font-semibold"
+                      style={{ color: "rgba(15,23,42,0.6)" }}
+                    >
+                      {name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Phase label tag */}
+            <div
+              className="pointer-events-none absolute right-3 top-3 z-[600] rounded-xl px-3 py-1.5"
+              style={{
+                background: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(156,199,43,0.2)",
+                boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+              }}
+            >
+              <span
+                className="text-[9px] font-bold uppercase tracking-[0.2em]"
+                style={{ color: BRAND }}
+              >
+                {phase === "globe" ? "3D Globe" : "Asset Map"}
+              </span>
+            </div>
+          </div>
+
+          {/* RIGHT: property list */}
+          <div
+            className="flex flex-col lg:w-[420px] xl:w-[460px] rounded-3xl overflow-hidden"
+            style={{
+              background: "#ffffff",
+              border: "1px solid rgba(15,23,42,0.08)",
+              boxShadow: "0 8px 32px rgba(15,23,42,0.07)",
+            }}
+          >
+            {/* Card list */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3">
+              {filtered.length === 0 ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: "rgba(15,23,42,0.38)" }}
+                  >
+                    No properties match.
+                  </p>
+                </div>
+              ) : (
+                <motion.div className="flex flex-col gap-2">
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map((p, i) => (
+                      <motion.div
+                        key={p.id}
+                        ref={(el) => {
+                          if (el) cardRefs.current[p.id] = el;
+                        }}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: i < 12 ? i * 0.025 : 0,
+                        }}
+                      >
+                        <PropertyCard
+                          property={p}
+                          active={p.id === selectedId}
+                          onClick={() => handleCardClick(p.id)}
+                          onHover={() => setHoveredId(p.id)}
+                          onLeave={() => setHoveredId(null)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 min-h-0 p-3">
+          <div
+            className="h-full rounded-3xl overflow-hidden flex flex-col"
+            style={{
+              background: "#ffffff",
+              border: "1px solid rgba(15,23,42,0.08)",
+              boxShadow: "0 8px 32px rgba(15,23,42,0.07)",
+            }}
+          >
+            <div className="flex-1 min-h-0 overflow-y-auto p-4">
+              {filtered.length === 0 ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: "rgba(15,23,42,0.38)" }}
+                  >
+                    No properties match.
+                  </p>
+                </div>
+              ) : (
+                <motion.div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map((p, i) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: i < 15 ? i * 0.018 : 0,
+                        }}
+                      >
+                        <PropertyListCard
+                          property={p}
+                          onClick={() => setModalPropertyId(p.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {modalProperty && viewMode === "list" && (
+          <PropertyDetailModal
+            property={modalProperty}
+            onClose={() => setModalPropertyId(null)}
+            onViewMap={() => openPropertyInInteractiveMap(modalProperty.id)}
+            onViewInteractive={() =>
+              openPropertyInInteractiveMap(modalProperty.id)
+            }
+          />
+        )}
+      </AnimatePresence>
+
+      <footer
+        className="relative z-10 shrink-0 py-7"
+        style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
+      >
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.75 }}
+          variants={FOOTER_STAGGER}
+          className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <motion.div
+            variants={FOOTER_ITEM}
+            whileHover={{ y: -2 }}
+            className="flex items-center gap-3"
+          >
+            <div
+              className="w-7 h-7 rounded-sm flex items-center justify-center"
+              style={{ background: BRAND }}
+            >
+              <span className="text-[#ffffff] font-black text-xs">GG</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 leading-none">
+                Greens Global
+              </p>
+              <p
+                className="text-[10px] tracking-widest leading-none mt-0.5"
+                style={{ color: `${BRAND}88` }}
+              >
+                EST. 1958
+              </p>
+            </div>
+          </motion.div>
+          <motion.p
+            variants={FOOTER_ITEM}
+            className="text-xs"
+            style={{ color: "rgba(0,0,0,0.3)" }}
+          >
+            © {new Date().getFullYear()} Greens Global, Inc. All Rights
+            Reserved.
+          </motion.p>
+          <motion.div variants={FOOTER_ITEM} className="flex gap-5">
+            {["Privacy Policy", "Employee Portal", "Careers"].map((item) => (
+              <motion.a
+                key={item}
+                href="#"
+                className="text-xs hover:text-gray-900 transition-colors"
+                style={{ color: "rgba(0,0,0,0.55)" }}
+                whileHover={{ y: -2 }}
+              >
+                {item}
+              </motion.a>
+            ))}
+          </motion.div>
+        </motion.div>
+      </footer>
     </motion.div>
   );
 }
