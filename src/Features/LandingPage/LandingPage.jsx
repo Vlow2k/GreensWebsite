@@ -473,10 +473,17 @@ export default function LandingPage() {
             autoPlay
             muted
             loop
+            poster=""
+            preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
-            // TODO: Add video URL from CDN
-            // src={heroVideo}
-          />
+            crossOrigin="anonymous"
+          >
+            <source
+              src="https://cloud.greensglobal.com/dl/d73J79F6cYHC"
+              type="video/mp4"
+            />
+            Your browser does not support the video tag.
+          </video>
           <div
             className="absolute inset-0"
             style={{ background: "rgba(255, 255, 255, 0.25)" }}
