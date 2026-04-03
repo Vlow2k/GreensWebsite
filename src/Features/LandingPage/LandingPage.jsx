@@ -155,29 +155,22 @@ function DotNav({ active, onDotClick }) {
             {label}
           </span>
           {/* Dot / bar */}
-          <button
-            onClick={() => onDotClick(i)}
-            aria-label={`Go to ${label}`}
-            className="rounded-full transition-all duration-300 shrink-0"
-            style={{
-              width: i === active ? 22 : 6,
-              height: 6,
-              background: i === active ? BRAND : "rgba(0,0,0,0.22)",
-            }}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   UI ─ ANIMATED COUNTER
-───────────────────────────────────────────────────────────── */
-function Counter({
-  to,
-  prefix = "",
-  suffix = "",
+          <motion.div
+            style={{ y: heroCanvasY, opacity: heroCanvasOp }}
+            className="absolute inset-0 z-0 overflow-hidden"
+          >
+            <div className="absolute inset-0 w-full h-full">
+              <iframe
+                src={`https://www.youtube.com/embed/M-xgQDjnnKw?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=M-xgQDjnnKw&playsinline=1`}
+                title="Hero video"
+                allow="autoplay; encrypted-media"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                frameBorder="0"
+                allowFullScreen
+              />
+              <div className="absolute inset-0" style={{ background: "rgba(255,255,255,0.25)" }} />
+            </div>
+          </motion.div>
   duration = 1.6,
   grouping = true,
 }) {
